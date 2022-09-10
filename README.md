@@ -1,8 +1,17 @@
 # Setup
-```conda env create -f environment.yml```
+```
+conda env create -f environment.yml
+```
+
 This creates the snowflakes environment
-```conda activate snowflakes```
+
+```
+conda activate snowflakes
+```
+
 This activates the environment
 
 # Saving environment
-```conda env export > environment.yml```
+```
+conda env export > environment.yml
+```
