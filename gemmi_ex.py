@@ -9,7 +9,6 @@ from sympy import sympify
 
 #visualize coord points using matplotlib
 #label Ba, Ti, S points as diff colors
-#
 #verify w/ boyang that it is the unit cell he wants
 #replicate unit cell 
 
@@ -23,54 +22,98 @@ def main():
             get_plane('_atom_site_fract_z', '_cell_length_c', block)
         ]).transpose()
         # [Ba_1 Ti_1 Ti_2 S_1 S_2]
-        #print(point_coords.transpose()) 
+
         translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
         unit_cell = get_unit_cell_coord(translation_mat, coords_by_element)
-        print(coords_by_element[-1])
-        print(translation_mat)
+        print("xyz=", coords_by_element)
+        #print(translation_mat)
         print()
-        print(unit_cell[-1])
+        print(unit_cell[0])
 
     except Exception as e:
         print("Oops.", e)
         sys.exit(1)
 
     fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    # Data for a three-dimensional line
-    zline = np.linspace(0, 15, 1000)
-    xline = np.sin(zline)
-    yline = np.cos(zline)
-    #ax.plot3D(xline, yline, zline, 'gray')
+    ax = fig.add_subplot(projection='3d')
 
-    # Data for three-dimensional scattered points
-    zdata = coords_by_element[2, :]
-    xdata = coords_by_element[0, :]
-    ydata = coords_by_element[1, :]
-    ax.scatter3D(xdata, ydata, zdata, c=zdata, cmap='viridis')
-    #plt.show()
+    Ba_data = unit_cell[0, :, :]
+    Ti_1_data = unit_cell[1, :, :]
+    Ti_2_data = unit_cell[2, :, :]
+    S_1_data = unit_cell[3, :, :]
+    S_2_data = unit_cell[4, :, :]
+    ax.set_xlabel('X Axis')
+    ax.set_ylabel('Y Axis')
+    ax.set_zlabel('Z Axis')
+    labels = block.find_loop('_atom_site_label')
+    print(labels)
+    for element, label in zip(unit_cell, labels):
+        ax.scatter(element[:, 0], element[:, 1], element[:, 2], label=label)
 
-#separate by element coord when calling fn
-def get_unit_cell_coord(translation_mat, xyz_mat):
+    # ax.scatter3D(Ba_data, Ti_1_data, Ti_2_data, S_1_data, S_2_data, c=c, cmap='viridis')
+    ax.legend()
+    plt.show()
+
+def hex_to_cart():
+    return
+    
+#builds matrices for each element's symm operation
+def get_unit_cell_coord(translation_mat, coords_by_element):
     unit_cell = []
-    for element in xyz_mat:
-        unit_cell.append(apply_translation(translation_mat, element))
+    for element in coords_by_element:
+        symmetry_operation_result = apply_translations(translation_mat, element)
+        unit_cell.append(symmetry_operation_result)
     return np.array(unit_cell)
 
-def apply_translation(translation_mat, xyz):
+#uses sympy package to assign x,y,z symm op from CIF file to numerical values
+def apply_translations(translation_mat, xyz):
     def map_xyz(x,y,z):
         return {'x': x, 'y': y, 'z': z}
-    def compute_translation(coord, t):
+    def compute_translation(xyz, t):
         expr = sympify(t)
-        return expr.evalf(subs=(map_xyz(*coord)))
+        return expr.evalf(subs=(map_xyz(*xyz)))
+
+        """
+        map_xyz(*xyz) is the same as
+
+        map_xyz(xyz[0], xyz[1], xyz[2])
+        """
 
     return [
-        [compute_translation(xyz, t) for t in translation]
-        for translation in translation_mat
+        [compute_translation(xyz, t) for t in translation] 
+        for translation in translation_mat # t is x, y, z point in row. translation is row (12).
     ]
-        
-    
+"""
+Example output for S_2
+xyz= [9.71108897 3.87698949 1.7026527 ]
+[['x' 'y' 'z']
+ ['-y' 'x-y' 'z']
+ ['-x+y' '-x' 'z']
+ ['-x' '-y' 'z+1/2']
+ ['y' '-x+y' 'z+1/2']
+ ['x-y' 'x' 'z+1/2']
+ ['-y' '-x' 'z+1/2']
+ ['-x+y' 'y' 'z+1/2']
+ ['x' 'x-y' 'z+1/2']
+ ['y' 'x' 'z']
+ ['x-y' '-y' 'z']
+ ['-x' '-x+y' 'z']]
 
+[[9.71108897000000 3.87698949000000 1.70265270000000]
+ [-3.87698949000000 5.83409948000000 1.70265270000000]
+ [-5.83409948000000 -9.71108897000000 1.70265270000000]
+ [-9.71108897000000 -3.87698949000000 2.20265270000000]
+ [3.87698949000000 -5.83409948000000 2.20265270000000]
+ [5.83409948000000 9.71108897000000 2.20265270000000]
+ [-3.87698949000000 -9.71108897000000 2.20265270000000]
+ [-5.83409948000000 3.87698949000000 2.20265270000000]
+ [9.71108897000000 5.83409948000000 2.20265270000000]
+ [3.87698949000000 9.71108897000000 1.70265270000000]
+ [5.83409948000000 -3.87698949000000 1.70265270000000]
+ [-9.71108897000000 -5.83409948000000 1.70265270000000]]
+"""        
+    
+#extracts symm op from CIF file into a matrix of strings
 def get_translation_mat(symm_operations, block):
     translation_expressions = [cif.as_string(i) for i in (block.find_loop(symm_operations))]
     translation_expressions_per_axis = [ 
@@ -79,6 +122,7 @@ def get_translation_mat(symm_operations, block):
     ]
     return np.array(translation_expressions_per_axis)
 
+#extracts fract site values and cell length and multiple for xyz coord
 def get_plane(site_fract_name, cell_length_name, block):
     fract_vals = [as_number(val) for val in block.find_loop(site_fract_name)]
     cell_length = as_number(block.find_value(cell_length_name))
