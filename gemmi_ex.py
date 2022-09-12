@@ -21,7 +21,7 @@ def main():
     unit_cell = get_unit_cell_coord(cart_translation_mat, cart_coords_by_element)
     print("xyz=", cart_coords_by_element)
     print()
-    print(unit_cell[0])
+    print(unit_cell)
 
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -37,6 +37,7 @@ def main():
     ax.legend()
     plt.show()
 
+#extract atom site fract & cell length from CIF file
 def get_cart_coords_by_element(block):
     hex_coords_by_element = np.array([
         get_plane('_atom_site_fract_x', '_cell_length_a', block),
@@ -46,16 +47,19 @@ def get_cart_coords_by_element(block):
     # [Ba_1 Ti_1 Ti_2 S_1 S_2]
     return hex_to_cart_np(hex_coords_by_element)
 
+#extract symmetry operations from CIF file & convert to cartesian coordinates
 def get_cart_translation_matrix(block):
     hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
     cart_translation_mat = hex_to_cart_sympy(hex_translation_mat)
     return cart_translation_mat
 
+# converts hex to cart coordinates np.array
 def hex_to_cart_np(hexagonal_coords):
     hex_to_cart_mat = np.array([[1, -.5, 0], [math.sqrt(3)/2, 0, 0], [0, 0, 1]])
     cartesian_coord = np.dot(hex_to_cart_mat, hexagonal_coords.T)
     return cartesian_coord.T
 
+# converts hex to cart coordinates sympy array
 def hex_to_cart_sympy(hexagonal_coords):
     hex_to_cart_mat = Matrix([[1, -.5, 0], [math.sqrt(3)/2, 0, 0], [0, 0, 1]])
     cartesian_coords = hex_to_cart_mat * hexagonal_coords.T
@@ -91,9 +95,11 @@ def get_plane(site_fract_name, cell_length_name, block):
     cell_length = as_number(block.find_value(cell_length_name))
     return [(i * cell_length) for i in fract_vals]
 
+# converts strings to numbers 
 def as_number(num_str):
     return cif.as_number(remove_stddev(num_str))
 
+# removes std. dev from CIF file values
 def remove_stddev(num_str):
     index_of_stddev = num_str.find('(')
     if index_of_stddev >= 0:
