@@ -13,16 +13,19 @@ from sympy import Matrix, Symbol
 def main():
     doc = cif.read_file('/Users/clairewu/Downloads/gemmi/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
-    cart_coords_by_element = get_cart_coords_by_element(block)
-    cart_translation_mat = get_cart_translation_matrix(block)
+    hex_coords_by_element = get_hex_coords_by_element(block)
+    hex_translation_mat = get_hex_translation_matrix(block)
+    # cart_coords_by_element = get_cart_coords_by_element(block)
+    # cart_translation_mat = get_cart_translation_matrix(block)
 
-    print(cart_translation_mat)
+    print(hex_translation_mat)
     
-    unit_cell = get_unit_cell_coord(cart_translation_mat, cart_coords_by_element)
-    print("xyz=", cart_coords_by_element)
+    unit_cell = get_unit_cell_coord(hex_translation_mat, hex_coords_by_element)
+    print("xyz=", hex_coords_by_element)
     print()
     print(unit_cell)
 
+    """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     ax.set_xlabel('X Axis')
@@ -36,16 +39,22 @@ def main():
 
     ax.legend()
     plt.show()
+    """
 
-#extract atom site fract & cell length from CIF file
-def get_cart_coords_by_element(block):
+#extract HEX atom site fract & cell length from CIF file
+def get_hex_coords_by_element(block):
     hex_coords_by_element = np.array([
         get_plane('_atom_site_fract_x', '_cell_length_a', block),
         get_plane('_atom_site_fract_y', '_cell_length_b', block),
         get_plane('_atom_site_fract_z', '_cell_length_c', block)
     ]).transpose()
     # [Ba_1 Ti_1 Ti_2 S_1 S_2]
-    return hex_to_cart_np(hex_coords_by_element)
+    return hex_coords_by_element
+
+#extract HEX symmetry operations from CIF file 
+def get_hex_translation_matrix(block):
+    hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
+    return hex_translation_mat
 
 #extract symmetry operations from CIF file & convert to cartesian coordinates
 def get_cart_translation_matrix(block):
@@ -105,6 +114,16 @@ def remove_stddev(num_str):
     if index_of_stddev >= 0:
         return num_str[:index_of_stddev]
     return num_str #string
+
+#extract atom site fract & cell length from CIF file and convert to cartesian
+def get_cart_coords_by_element(block):
+    hex_coords_by_element = np.array([
+        get_plane('_atom_site_fract_x', '_cell_length_a', block),
+        get_plane('_atom_site_fract_y', '_cell_length_b', block),
+        get_plane('_atom_site_fract_z', '_cell_length_c', block)
+    ]).transpose()
+    # [Ba_1 Ti_1 Ti_2 S_1 S_2]
+    return hex_to_cart_np(hex_coords_by_element)
 
 if __name__ == '__main__':
     main()
