@@ -24,7 +24,8 @@ def main():
     unit_cell = get_unit_cell_coord(hex_translation_mat, hex_coords_by_element)
     print("xyz=", hex_coords_by_element)
     print()
-    print(unit_cell)
+    print(get_box_coords(unit_cell[0]))
+    print(get_box_coords(unit_cell[1]))
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
@@ -42,19 +43,21 @@ def main():
     plt.show()
     """
 
-def define_box_coords(element):
-    if all((coord[0] > 11.671 or coord[1] > 11.671) for coord in element):
-        return coord[0] - [11.671, 11.671, 5.833] 
-    
-    if all(unit_cell < 0 for unit_cell in unit_cell[0]):
-        return unit_cell + [11.671, 11.671, 5.833]
-
-    if all(unit_cell > 5.833 for unit_cell in unit_cell([0][0])):
-        return unit_cell[0][0] - [11.671, 11.671, 5.833]
-
-    if all(unit_cell < 0 for unit_cell in unit_cell([0][0])):
-        return unit_cell[0][0] + [11.671, 11.671, 5.833]
-        
+def get_box_coords(unit_cell): #12 x 3
+    for element in unit_cell:
+        a_pos_mat = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
+        a_neg_mat = np.array([[-1, 0, 0], [0, 0, 0], [0, 0, 0]])
+        b_pos_mat = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        b_neg_mat = np.array([[0, 0, 0], [0, -1, 0], [0, 0, 0]])
+        c_pos_mat = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
+        c_neg_mat = np.array([[0, 0, 0], [0, 0, 0], [0, 0, -1]])
+        a_pos_cell = np.dot(element, a_pos_mat)
+        a_neg_cell = np.dot(element, a_neg_mat)
+        b_pos_cell = np.dot(element, b_pos_mat)
+        b_neg_cell = np.dot(element, b_neg_mat)
+        c_pos_cell = np.dot(element, c_pos_mat)
+        c_neg_cell = np.dot(element, c_neg_mat)
+        return a_pos_cell, a_neg_cell, b_pos_cell, b_neg_cell, c_pos_cell, c_neg_cell
 
 #extract HEX atom site fract & cell length from CIF file
 def get_hex_coords_by_element(block):
