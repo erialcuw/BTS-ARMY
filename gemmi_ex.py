@@ -15,17 +15,18 @@ def main():
     doc = cif.read_file('/Users/clairewu/Downloads/gemmi/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
     hex_coords_by_element = get_hex_coords_by_element(block)
-    hex_translation_mat = get_hex_translation_matrix(block)
+    hex_transformation_mat = get_hex_transformation_matrix(block)
     # cart_coords_by_element = get_cart_coords_by_element(block)
     # cart_translation_mat = get_cart_translation_matrix(block)
 
-    print(hex_translation_mat)
+    print(hex_transformation_mat)
     
-    unit_cell = get_unit_cell_coord(hex_translation_mat, hex_coords_by_element)
+    unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element)
     print("xyz=", hex_coords_by_element)
     print()
-    print(get_box_coords(unit_cell[0]))
-    print(get_box_coords(unit_cell[1]))
+    print(translate_unit_cell(unit_cell[0]))
+    print(translate_unit_cell(unit_cell[1]))
+    #print(get_box_coords(unit_cell))
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
@@ -42,21 +43,15 @@ def main():
     ax.legend()
     plt.show()
     """
-
-def get_box_coords(unit_cell): #12 x 3
+# I dont think i should be using this many zeros
+def translate_unit_cell(unit_cell): #12 x 3
     for element in unit_cell:
-        a_pos_mat = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
-        a_neg_mat = np.array([[-1, 0, 0], [0, 0, 0], [0, 0, 0]])
-        b_pos_mat = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
-        b_neg_mat = np.array([[0, 0, 0], [0, -1, 0], [0, 0, 0]])
-        c_pos_mat = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
-        c_neg_mat = np.array([[0, 0, 0], [0, 0, 0], [0, 0, -1]])
-        a_pos_cell = np.dot(element, a_pos_mat)
-        a_neg_cell = np.dot(element, a_neg_mat)
-        b_pos_cell = np.dot(element, b_pos_mat)
-        b_neg_cell = np.dot(element, b_neg_mat)
-        c_pos_cell = np.dot(element, c_pos_mat)
-        c_neg_cell = np.dot(element, c_neg_mat)
+        a_pos_cell = element + np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
+        a_neg_cell = element + np.array([[-1, 0, 0], [0, 0, 0], [0, 0, 0]])
+        b_pos_cell = element + np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        b_neg_cell = element + np.array([[0, 0, 0], [0, -1, 0], [0, 0, 0]])
+        c_pos_cell = element + np.array([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
+        c_neg_cell = element + np.array([[0, 0, 0], [0, 0, 0], [0, 0, -1]])
         return a_pos_cell, a_neg_cell, b_pos_cell, b_neg_cell, c_pos_cell, c_neg_cell
 
 #extract HEX atom site fract & cell length from CIF file
@@ -70,9 +65,9 @@ def get_hex_coords_by_element(block):
     return hex_coords_by_element
 
 #extract HEX symmetry operations from CIF file 
-def get_hex_translation_matrix(block):
-    hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
-    return hex_translation_mat
+def get_hex_transformation_matrix(block):
+    hex_transformation_mat = get_transformation_mat('_space_group_symop_operation_xyz', block)
+    return hex_transformation_mat
 
 # converts hex to cart coordinates np.array
 def hex_to_cart_np(hexagonal_coords):
@@ -87,27 +82,27 @@ def hex_to_cart_sympy(hexagonal_coords):
     return cartesian_coords.T
 
 #builds matrices for each element's symm operation
-def get_unit_cell_coord(translation_mat, coords_by_element):
+def get_unit_cell_coord(transformation_mat, coords_by_element):
     unit_cell = []
     for element in coords_by_element:
-        symmetry_operation_result = apply_translations(translation_mat, element) # 12x3, 1x3
+        symmetry_operation_result = apply_transformations(transformation_mat, element) # 12x3, 1x3
         unit_cell.append(symmetry_operation_result)
     return np.array(unit_cell)
 
 #uses sympy package to assign x,y,z symm op from CIF file to numerical values
-def apply_translations(translation_mat, xyz):
+def apply_transformations(transformation_mat, xyz):
     for val, symb in zip(xyz, ['x','y','z']):
-        translation_mat = translation_mat.subs(Symbol(symb), val)
-    return np.array(translation_mat)
+        transformation_mat = transformation_mat.subs(Symbol(symb), val)
+    return np.array(transformation_mat)
     
 #extracts symm op from CIF file into a matrix of strings
-def get_translation_mat(symm_operations, block):
-    translation_expressions = [cif.as_string(i) for i in (block.find_loop(symm_operations))]
-    translation_expressions_per_axis = Matrix([ 
+def get_transformation_mat(symm_operations, block):
+    transformation_expressions = [cif.as_string(i) for i in (block.find_loop(symm_operations))]
+    transformation_expressions_per_axis = Matrix([ 
         [coord_expr.strip() for coord_expr in expr.split(',')] 
-        for expr in translation_expressions
+        for expr in transformation_expressions
     ])
-    return translation_expressions_per_axis
+    return transformation_expressions_per_axis
     
 #extracts fract site values and cell length and multiple for xyz coord
 def get_plane(site_fract_name, cell_length_name, block):
@@ -137,10 +132,10 @@ def get_cart_coords_by_element(block):
     return hex_to_cart_np(hex_coords_by_element)
 
 #extract symmetry operations from CIF file & convert to cartesian coordinates
-def get_cart_translation_matrix(block):
-    hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
-    cart_translation_mat = hex_to_cart_sympy(hex_translation_mat)
-    return cart_translation_mat
+def get_cart_transformation_matrix(block):
+    hex_transformation_mat = get_transformation_mat('_space_group_symop_operation_xyz', block)
+    cart_transformation_mat = hex_to_cart_sympy(hex_transformation_mat)
+    return cart_transformation_mat
 
 if __name__ == '__main__':
     main()
