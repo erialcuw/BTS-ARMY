@@ -5,10 +5,11 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-#visualize coord points using matplotlib
-#label Ba, Ti, S points as diff colors
-#verify w/ boyang that it is the unit cell he wants
+#create box to check that all atoms are in the unit cell we want
 #replicate unit cell 
+#convert unit cell coordinates to cart
+#visualize cart points using matplotlib
+#label Ba, Ti, S points as 3 diff colors
 
 def main():
     doc = cif.read_file('/Users/clairewu/Downloads/gemmi/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
@@ -41,6 +42,20 @@ def main():
     plt.show()
     """
 
+def define_box_coords(element):
+    if all((coord[0] > 11.671 or coord[1] > 11.671) for coord in element):
+        return coord[0] - [11.671, 11.671, 5.833] 
+    
+    if all(unit_cell < 0 for unit_cell in unit_cell[0]):
+        return unit_cell + [11.671, 11.671, 5.833]
+
+    if all(unit_cell > 5.833 for unit_cell in unit_cell([0][0])):
+        return unit_cell[0][0] - [11.671, 11.671, 5.833]
+
+    if all(unit_cell < 0 for unit_cell in unit_cell([0][0])):
+        return unit_cell[0][0] + [11.671, 11.671, 5.833]
+        
+
 #extract HEX atom site fract & cell length from CIF file
 def get_hex_coords_by_element(block):
     hex_coords_by_element = np.array([
@@ -55,12 +70,6 @@ def get_hex_coords_by_element(block):
 def get_hex_translation_matrix(block):
     hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
     return hex_translation_mat
-
-#extract symmetry operations from CIF file & convert to cartesian coordinates
-def get_cart_translation_matrix(block):
-    hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
-    cart_translation_mat = hex_to_cart_sympy(hex_translation_mat)
-    return cart_translation_mat
 
 # converts hex to cart coordinates np.array
 def hex_to_cart_np(hexagonal_coords):
@@ -97,7 +106,6 @@ def get_translation_mat(symm_operations, block):
     ])
     return translation_expressions_per_axis
     
-
 #extracts fract site values and cell length and multiple for xyz coord
 def get_plane(site_fract_name, cell_length_name, block):
     fract_vals = [as_number(val) for val in block.find_loop(site_fract_name)]
@@ -124,6 +132,12 @@ def get_cart_coords_by_element(block):
     ]).transpose()
     # [Ba_1 Ti_1 Ti_2 S_1 S_2]
     return hex_to_cart_np(hex_coords_by_element)
+
+#extract symmetry operations from CIF file & convert to cartesian coordinates
+def get_cart_translation_matrix(block):
+    hex_translation_mat = get_translation_mat('_space_group_symop_operation_xyz', block)
+    cart_translation_mat = hex_to_cart_sympy(hex_translation_mat)
+    return cart_translation_mat
 
 if __name__ == '__main__':
     main()
