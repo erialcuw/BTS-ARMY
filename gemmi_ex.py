@@ -5,6 +5,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
+#create relative path w/ CIF file in github
 #create box to check that all atoms are in the unit cell we want
 #replicate unit cell 
 #convert unit cell coordinates to cart
@@ -12,7 +13,6 @@ from sympy import Matrix, Symbol
 #label Ba, Ti, S points as 3 diff colors
 
 def main():
-    #relative path w/ CIF file in github
     doc = cif.read_file('/Users/clairewu/Downloads/gemmi/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
     hex_coords_by_element = get_hex_coords_by_element(block)
