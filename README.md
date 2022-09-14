@@ -15,3 +15,5 @@ This activates the environment
 ```
 conda env export > environment.yml
 ```
+# Match conda environment to Python
+search "Python Interpreter" and click the version with "snowflakes"
