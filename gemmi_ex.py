@@ -12,6 +12,7 @@ from sympy import Matrix, Symbol
 #label Ba, Ti, S points as 3 diff colors
 
 def main():
+    #relative path w/ CIF file in github
     doc = cif.read_file('/Users/clairewu/Downloads/gemmi/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
     hex_coords_by_element = get_hex_coords_by_element(block)
@@ -24,9 +25,7 @@ def main():
     unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element)
     print("xyz=", hex_coords_by_element)
     print()
-    print(translate_unit_cell(unit_cell[0]))
-    print(translate_unit_cell(unit_cell[1]))
-    #print(get_box_coords(unit_cell))
+    print(get_translated_cells(unit_cell))
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
@@ -43,16 +42,35 @@ def main():
     ax.legend()
     plt.show()
     """
-# I dont think i should be using this many zeros
-def translate_unit_cell(unit_cell): #12 x 3
-    for element in unit_cell:
-        a_pos_cell = element + np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])
-        a_neg_cell = element + np.array([[-1, 0, 0], [0, 0, 0], [0, 0, 0]])
-        b_pos_cell = element + np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
-        b_neg_cell = element + np.array([[0, 0, 0], [0, -1, 0], [0, 0, 0]])
-        c_pos_cell = element + np.array([[0, 0, 0], [0, 0, 0], [0, 0, 1]])
-        c_neg_cell = element + np.array([[0, 0, 0], [0, 0, 0], [0, 0, -1]])
-        return a_pos_cell, a_neg_cell, b_pos_cell, b_neg_cell, c_pos_cell, c_neg_cell
+
+# label the 6 translated unit cells
+def get_translated_cells(unit_cell):
+    a_pos, a_neg, b_pos, b_neg, c_pos, c_neg = ([] for _ in range(6))
+    for element in unit_cell: 
+        ap, an, bp, bn, cp, cn = translate_element(element)
+        a_pos.append(ap)
+        a_neg.append(an)
+        b_pos.append(bp)
+        b_neg.append(bn)
+        c_pos.append(cp)
+        c_neg.append(cn)
+    return np.array(a_pos), np.array(a_neg), np.array(b_pos), np.array(b_neg), np.array(c_pos), np.array(c_neg)
+
+#5 elements of 12x3 matrices
+def translate_element(element): #12 x 3, goal: 420 xyz coords 
+    a_pos = np.array([[1, 0, 0]])
+    a_neg = np.array([[-1, 0, 0]])
+    b_pos = np.array([[0, 1, 0]])
+    b_neg = np.array([[0, -1, 0]])
+    c_pos = np.array([[0, 0, 1]])
+    c_neg = np.array([[0, 0, -1]])
+    a_pos_cell = element + np.repeat(a_pos, 12, axis=0)
+    a_neg_cell = element + np.repeat(a_neg, 12, axis=0)
+    b_pos_cell = element + np.repeat(b_pos, 12, axis=0)
+    b_neg_cell = element + np.repeat(b_neg, 12, axis=0)
+    c_pos_cell = element + np.repeat(c_pos, 12, axis=0)
+    c_neg_cell = element + np.repeat(c_neg, 12, axis=0)
+    return a_pos_cell, a_neg_cell, b_pos_cell, b_neg_cell, c_pos_cell, c_neg_cell
 
 #extract HEX atom site fract & cell length from CIF file
 def get_hex_coords_by_element(block):
