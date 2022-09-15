@@ -5,9 +5,6 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-#create relative path w/ CIF file in github
-#create box to check that all atoms are in the unit cell we want
-#replicate unit cell 
 #convert unit cell coordinates to cart
 #visualize cart points using matplotlib
 #label Ba, Ti, S points as 3 diff colors
