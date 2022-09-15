@@ -13,7 +13,7 @@ from sympy import Matrix, Symbol
 #label Ba, Ti, S points as 3 diff colors
 
 def main():
-    doc = cif.read_file('/Users/clairewu/Downloads/gemmi/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
+    doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
     hex_coords_by_element = get_hex_coords_by_element(block)
     hex_transformation_mat = get_hex_transformation_matrix(block)
