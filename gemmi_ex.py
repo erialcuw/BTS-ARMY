@@ -6,8 +6,9 @@ from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
 #convert unit cell coordinates to cart
-#visualize cart points using matplotlib
-#label Ba, Ti, S points as 3 diff colors
+#add charge value to unit cell array or create new array w/ values
+#use rand seed to select point in range of 7 unit cells
+#for loop to calculate electric field at that random point
 
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
