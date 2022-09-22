@@ -5,8 +5,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-#convert unit cell coordinates to cart
-#add charge value to unit cell array or create new array w/ values
+#convert 7 unit cell coordinates to cart through for loop
 #use rand seed to select point in range of 7 unit cells
 #for loop to calculate electric field at that random point
 
@@ -22,14 +21,16 @@ def main():
     
     unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element)
     print("xyz=", hex_coords_by_element)
-    #print(unit_cell.shape)
+    print()
+    print(unit_cell[-1].shape)
     #print(get_translated_cells(unit_cell))
-
+    for translations in unit_cell[0]:
+        print(hex_to_cart_np(translations))
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([[2], [4], [4], [-2], [-2]])
     charge_coords = np.repeat(charges, 12, axis=1)
     all_charge_coords = np.repeat(charge_coords[:, :, np.newaxis], 3, axis=2) # 5x12x3 array matching unit cell
-    print(all_charge_coords.shape)
+    #print(all_charge_coords.shape)
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
@@ -58,7 +59,7 @@ def get_translated_cells(unit_cell):
         b_neg.append(bn)
         c_pos.append(cp)
         c_neg.append(cn)
-    return np.array(a_pos), np.array(a_neg), np.array(b_pos), np.array(b_neg), np.array(c_pos), np.array(c_neg)
+    return np.array(a_pos).shape, np.array(a_neg).shape, np.array(b_pos).shape, np.array(b_neg).shape, np.array(c_pos).shape, np.array(c_neg).shape
 
 #5 elements of 12x3 matrices
 def translate_element(element): #12 x 3, goal: 420 xyz coords 
@@ -154,7 +155,7 @@ def get_cart_coords_by_element(block):
     return hex_to_cart_np(hex_coords_by_element)
 
 #extract symmetry operations from CIF file & convert to cartesian coordinates
-def get_cart_transformation_matrix(block):
+def get_cart_translation_matrix(block):
     hex_transformation_mat = get_transformation_mat('_space_group_symop_operation_xyz', block)
     cart_transformation_mat = hex_to_cart_sympy(hex_transformation_mat)
     return cart_transformation_mat
