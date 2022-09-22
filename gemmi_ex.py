@@ -22,8 +22,14 @@ def main():
     
     unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element)
     print("xyz=", hex_coords_by_element)
-    print(unit_cell.shape)
-    print(len(get_translated_cells(unit_cell)))
+    #print(unit_cell.shape)
+    #print(get_translated_cells(unit_cell))
+
+    # Ba = 2+, Ti = 4+, S = 2-
+    charges = np.array([[2], [4], [4], [-2], [-2]])
+    charge_coords = np.repeat(charges, 12, axis=1)
+    all_charge_coords = np.repeat(charge_coords[:, :, np.newaxis], 3, axis=2) # 5x12x3 array matching unit cell
+    print(all_charge_coords.shape)
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
