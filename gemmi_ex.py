@@ -5,7 +5,6 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-#convert 7 unit cell coordinates to cart through for loop
 #use rand seed to select point in range of 7 unit cells
 #for loop to calculate electric field at that random point
 
@@ -19,13 +18,15 @@ def main():
 
     print(hex_transformation_mat)
     
-    unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element)
+    unit_cell = np.array(get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element))
     print("xyz=", hex_coords_by_element)
     print()
-    print(unit_cell[-1].shape)
-    #print(get_translated_cells(unit_cell))
-    for translations in unit_cell[0]:
-        print(hex_to_cart_np(translations))
+    e_field_box = np.array(get_translated_cells(unit_cell))
+    e_field_box = np.append(e_field_box, np.array([unit_cell]), axis=0)
+    print(e_field_box.shape)
+    cart_e_field_box = get_cart_e_field_box(e_field_box)
+    print(cart_e_field_box[0])
+    
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([[2], [4], [4], [-2], [-2]])
     charge_coords = np.repeat(charges, 12, axis=1)
@@ -48,6 +49,20 @@ def main():
     plt.show()
     """
 
+""" 
+(7, 5, 12, 3)
+(unit cell, element, translation, xyz)
+"""
+def get_cart_e_field_box(e_field_box):
+    cart_e_field_box = []
+    for unit_cell in e_field_box:
+        cart_unit_cell = []
+        for element in unit_cell:
+            cart_unit_cell.append(hex_to_cart_np(element))   
+        cart_e_field_box.append(cart_unit_cell)
+    cart_e_field_box = np.array(cart_e_field_box)
+    return cart_e_field_box
+
 # label the 6 translated unit cells
 def get_translated_cells(unit_cell):
     a_pos, a_neg, b_pos, b_neg, c_pos, c_neg = ([] for _ in range(6))
@@ -59,7 +74,7 @@ def get_translated_cells(unit_cell):
         b_neg.append(bn)
         c_pos.append(cp)
         c_neg.append(cn)
-    return np.array(a_pos).shape, np.array(a_neg).shape, np.array(b_pos).shape, np.array(b_neg).shape, np.array(c_pos).shape, np.array(c_neg).shape
+    return np.array(a_pos), np.array(a_neg), np.array(b_pos), np.array(b_neg), np.array(c_pos), np.array(c_neg)
 
 #5 elements of 12x3 matrices
 def translate_element(element): #12 x 3, goal: 420 xyz coords 
