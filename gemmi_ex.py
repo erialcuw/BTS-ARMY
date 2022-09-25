@@ -5,7 +5,6 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-#use rand seed to select point in range of 7 unit cells
 #for loop to calculate electric field at that random point
 
 def main():
@@ -25,7 +24,7 @@ def main():
     e_field_box = np.append(e_field_box, np.array([unit_cell]), axis=0)
     print(e_field_box.shape)
     cart_e_field_box = get_cart_e_field_box(e_field_box)
-    print(cart_e_field_box[0])
+    #print(cart_e_field_box[0])
     
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([[2], [4], [4], [-2], [-2]])
@@ -33,6 +32,7 @@ def main():
     all_charge_coords = np.repeat(charge_coords[:, :, np.newaxis], 3, axis=2) # 5x12x3 array matching unit cell
     #print(all_charge_coords.shape)
 
+    print(get_rand_coord(cart_e_field_box))
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -49,10 +49,15 @@ def main():
     plt.show()
     """
 
+def get_rand_coord(cart_e_field_box):
+    rand_coord = np.random.randint(1, cart_e_field_box.shape) # [6, 1, 2]
+    return cart_e_field_box[rand_coord[0], rand_coord[1], rand_coord[2]] #cart_e_field_box[6, 1, 2]
+     
 """ 
 (7, 5, 12, 3)
 (unit cell, element, translation, xyz)
 """
+# converts 7 u.c. to cartesian coord
 def get_cart_e_field_box(e_field_box):
     cart_e_field_box = []
     for unit_cell in e_field_box:
