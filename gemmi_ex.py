@@ -1,3 +1,5 @@
+from argparse import ArgumentError
+from calendar import c
 import sys
 from gemmi import cif
 import numpy as np
@@ -26,12 +28,13 @@ def main():
     #print(cart_e_field_box[0])
     
     # Ba = 2+, Ti = 4+, S = 2-
-    charges = np.array([[2], [4], [4], [-2], [-2]])
-    charge_coords = np.repeat(charges, 12, axis=1)
-    all_charge_coords = np.repeat(charge_coords[:, :, np.newaxis], 3, axis=2) # 5x12x3 array matching unit cell
-    #print(all_charge_coords.shape)
+    charges = np.array([2, 4, 4, -2, -2])
+    rand_coord, charge = get_rand_coord(cart_e_field_box, charges)
+    print("rand xyz =", rand_coord)
+    print()
+    print("q =", charge)
+    print("E field [V/m] = ", calc_e_field(cart_e_field_box, rand_coord, charge))
 
-    rand_coord = get_rand_coord(cart_e_field_box)
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -49,21 +52,33 @@ def main():
     """
 
 #for loop to calculate total electric field at that random point
+#TODO: CHECK W/ BOYANG
 # E = kq/r^2 where r = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2 - z1)^2)
-# if e_field_box element index is certain value, assign corresponding charge to it
-def calc_e_field(e_field_box, rand_coord):
-    k = 9e9 #Nm^2/C^2
-    charge = 1
+# units of coordinates: nm?
+
+def calc_e_field(e_field_box, rand_coord, charge):
+    k = 9e9 # N * m^2/C^2
+    e = 0
     for unit_cell in e_field_box:
         for element in unit_cell:
-            for translation in element:
-                e = k * charge / ((translation[0] - rand_coord[0]) ** 2 + (translation[1] - rand_coord[1]) ** 2 + (translation[2] - rand_coord[2]) ** 2)
+            for coord in element:
+                if not np.array_equal(coord, rand_coord):
+                    e += k * charge / ((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2)
     return e
 
-def get_rand_coord(cart_e_field_box):
-    rand_coord = np.random.randint(1, cart_e_field_box.shape) # [6, 1, 2]
-    return cart_e_field_box[rand_coord[0], rand_coord[1], rand_coord[2]] #cart_e_field_box[6, 1, 2]
-     
+def get_rand_coord(cart_e_field_box, charges):
+    if cart_e_field_box.shape[1] != charges.shape[0]:
+        raise ValueError(f"number of elements in e_field_box is different than number of charges in charges array, should be the same. " +
+        f"cart_e_field_box.shape = {cart_e_field_box.shape} charges.shape = {charges.shape}")
+    rand_index = get_rand_index(cart_e_field_box)
+    charge = charges[rand_index[1]]   
+    return cart_e_field_box[rand_index[0], rand_index[1], rand_index[2]], charge #cart_e_field_box[6, 1, 2]
+
+def get_rand_index(cart_e_field_box):
+    x = np.random.randint(1, cart_e_field_box.shape)
+    print("rand index", x)   
+    return x    
+
 """ 
 (7, 5, 12, 3)
 (unit cell, element, translation, xyz)
