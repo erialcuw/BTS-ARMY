@@ -5,7 +5,6 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-#for loop to calculate electric field at that random point
 
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
@@ -32,7 +31,7 @@ def main():
     all_charge_coords = np.repeat(charge_coords[:, :, np.newaxis], 3, axis=2) # 5x12x3 array matching unit cell
     #print(all_charge_coords.shape)
 
-    print(get_rand_coord(cart_e_field_box))
+    rand_coord = get_rand_coord(cart_e_field_box)
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -48,6 +47,18 @@ def main():
     ax.legend()
     plt.show()
     """
+
+#for loop to calculate total electric field at that random point
+# E = kq/r^2 where r = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2 - z1)^2)
+# if e_field_box element index is certain value, assign corresponding charge to it
+def calc_e_field(e_field_box, rand_coord):
+    k = 9e9 #Nm^2/C^2
+    charge = 1
+    for unit_cell in e_field_box:
+        for element in unit_cell:
+            for translation in element:
+                e = k * charge / ((translation[0] - rand_coord[0]) ** 2 + (translation[1] - rand_coord[1]) ** 2 + (translation[2] - rand_coord[2]) ** 2)
+    return e
 
 def get_rand_coord(cart_e_field_box):
     rand_coord = np.random.randint(1, cart_e_field_box.shape) # [6, 1, 2]
