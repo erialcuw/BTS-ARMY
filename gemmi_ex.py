@@ -54,7 +54,7 @@ def main():
 #for loop to calculate total electric field at that random point
 #TODO: CHECK W/ BOYANG
 # E = kq/r^2 where r = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2 - z1)^2)
-# units of coordinates: nm?
+# units of coordinates: angstrom?
 
 def calc_e_field(e_field_box, rand_coord, charge):
     k = 9e9 # N * m^2/C^2
@@ -177,7 +177,7 @@ def get_transformation_mat(symm_operations, block):
 def get_plane(site_fract_name, cell_length_name, block):
     fract_vals = [as_number(val) for val in block.find_loop(site_fract_name)]
     cell_length = as_number(block.find_value(cell_length_name))
-    return [(i * cell_length) for i in fract_vals]
+    return [(i * cell_length * 10e-10) for i in fract_vals]
 
 # converts strings to numbers 
 def as_number(num_str):
