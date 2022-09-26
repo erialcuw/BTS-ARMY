@@ -13,8 +13,6 @@ def main():
     block = doc.sole_block()  # CIF has exactly one block
     hex_coords_by_element = get_hex_coords_by_element(block)
     hex_transformation_mat = get_hex_transformation_matrix(block)
-    # cart_coords_by_element = get_cart_coords_by_element(block)
-    # cart_translation_mat = get_cart_translation_matrix(block)
 
     print(hex_transformation_mat)
     
@@ -50,11 +48,6 @@ def main():
     ax.legend()
     plt.show()
     """
-
-#for loop to calculate total electric field at that random point
-#TODO: CHECK W/ BOYANG
-# E = kq/r^2 where r = sqrt((x2-x1)^2 + (y2-y1)^2 + (z2 - z1)^2)
-# units of coordinates: angstrom?
 
 def calc_e_field(e_field_box, rand_coord, charge):
     k = 9e9 # N * m^2/C^2
@@ -189,22 +182,6 @@ def remove_stddev(num_str):
     if index_of_stddev >= 0:
         return num_str[:index_of_stddev]
     return num_str #string
-
-#extract atom site fract & cell length from CIF file and convert to cartesian
-def get_cart_coords_by_element(block):
-    hex_coords_by_element = np.array([
-        get_plane('_atom_site_fract_x', '_cell_length_a', block),
-        get_plane('_atom_site_fract_y', '_cell_length_b', block),
-        get_plane('_atom_site_fract_z', '_cell_length_c', block)
-    ]).transpose()
-    # [Ba_1 Ti_1 Ti_2 S_1 S_2]
-    return hex_to_cart_np(hex_coords_by_element)
-
-#extract symmetry operations from CIF file & convert to cartesian coordinates
-def get_cart_translation_matrix(block):
-    hex_transformation_mat = get_transformation_mat('_space_group_symop_operation_xyz', block)
-    cart_transformation_mat = hex_to_cart_sympy(hex_transformation_mat)
-    return cart_transformation_mat
 
 if __name__ == '__main__':
     main()
