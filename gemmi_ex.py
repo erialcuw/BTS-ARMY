@@ -61,7 +61,7 @@ def calc_e_field(e_field_box, rand_coord, charge):
 
 def get_rand_coord(cart_e_field_box, charges):
     if cart_e_field_box.shape[1] != charges.shape[0]:
-        raise ValueError(f"number of elements in e_field_box is different than number of charges in charges array, should be the same. " +
+        raise ArgumentError(f"number of elements in e_field_box is different than number of charges in charges array, should be the same. " +
         f"cart_e_field_box.shape = {cart_e_field_box.shape} charges.shape = {charges.shape}")
     rand_index = get_rand_index(cart_e_field_box)
     charge = charges[rand_index[1]]   
