@@ -7,7 +7,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-
+# 10 atoms calculate E field by hand and then compute using program
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
@@ -26,7 +26,7 @@ def main():
     #print(cart_e_field_box[0])
     
     # Ba = 2+, Ti = 4+, S = 2-
-    charges = np.array([2, 4, 4, -2, -2])
+    charges = np.array([2*1.6e-19, 4*1.6e-19, 4*1.6e-19, -2*1.6e-19, -2*1.6e-19])
     rand_coord, charge = get_rand_coord(cart_e_field_box, charges)
     print("rand xyz =", rand_coord)
     print()
@@ -51,13 +51,16 @@ def main():
 
 def calc_e_field(e_field_box, rand_coord, charge):
     k = 9e9 # N * m^2/C^2
-    e = 0
+    e_total = 0
     for unit_cell in e_field_box:
         for element in unit_cell:
             for coord in element:
                 if not np.array_equal(coord, rand_coord):
-                    e += k * charge / ((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2)
-    return e
+                    magnitude = k * charge / (((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2)**(3/2))
+                    e_total += math.sqrt(((magnitude * (coord[0] - rand_coord[0])) ** 2) 
+                    + ((magnitude * (coord[1] - rand_coord[1])) ** 2) 
+                    + ((magnitude * (coord[2] - rand_coord[2])) ** 2))
+    return f"{e_total:.3e}"
 
 def get_rand_coord(cart_e_field_box, charges):
     if cart_e_field_box.shape[1] != charges.shape[0]:
@@ -68,9 +71,9 @@ def get_rand_coord(cart_e_field_box, charges):
     return cart_e_field_box[rand_index[0], rand_index[1], rand_index[2]], charge #cart_e_field_box[6, 1, 2]
 
 def get_rand_index(cart_e_field_box):
-    x = np.random.randint(1, cart_e_field_box.shape)
-    print("rand index", x)   
-    return x    
+    rand_index = np.random.randint(1, cart_e_field_box.shape)
+    print("rand index", rand_index)   
+    return rand_index    
 
 """ 
 (7, 5, 12, 3)
