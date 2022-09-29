@@ -12,26 +12,24 @@ def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
     hex_coords_by_element = get_hex_coords_by_element(block)
-    hex_transformation_mat = get_hex_transformation_matrix(block)
-
-    print(hex_transformation_mat)
-    
+    hex_transformation_mat = get_hex_transformation_matrix(block)    
     unit_cell = np.array(get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element))
-    print("xyz=", hex_coords_by_element)
+    print("hex_xyz=", hex_coords_by_element)
     print()
+    cart_xyz = hex_to_cart_np(hex_coords_by_element)
+    print("cart_xyz", cart_xyz)    
+
     e_field_box = np.array(get_translated_cells(unit_cell))
     e_field_box = np.append(e_field_box, np.array([unit_cell]), axis=0)
     print(e_field_box.shape)
     cart_e_field_box = get_cart_e_field_box(e_field_box)
-    #print(cart_e_field_box[0])
     
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([2*1.6e-19, 4*1.6e-19, 4*1.6e-19, -2*1.6e-19, -2*1.6e-19])
-    rand_coord, charge = get_rand_coord(cart_e_field_box, charges)
-    print("rand xyz =", rand_coord)
+    rand_coord = get_rand_coord(cart_e_field_box)
+    print("rand coord =", rand_coord)
     print()
-    print("q =", charge)
-    print("E field [V/m] = ", calc_e_field(cart_e_field_box, rand_coord, charge))
+    print("E field [V/m] = ", f"{calc_e_field(cart_e_field_box, rand_coord, charges):.3e}")
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
@@ -49,34 +47,30 @@ def main():
     plt.show()
     """
 
-def calc_e_field(e_field_box, rand_coord, charge):
+def calc_e_field(e_field_box, rand_coord, charges):
     k = 9e9 # N * m^2/C^2
-    e_total = 0
+    e_total = 0 # V/m
     for unit_cell in e_field_box:
-        for element in unit_cell:
+        for element, charge in zip(unit_cell, charges):
             for coord in element:
                 if not np.array_equal(coord, rand_coord):
                     magnitude = k * charge / (((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2)**(3/2))
                     e_total += math.sqrt(((magnitude * (coord[0] - rand_coord[0])) ** 2) 
                     + ((magnitude * (coord[1] - rand_coord[1])) ** 2) 
                     + ((magnitude * (coord[2] - rand_coord[2])) ** 2))
-    return f"{e_total:.3e}"
+    return e_total
 
-def get_rand_coord(cart_e_field_box, charges):
-    if cart_e_field_box.shape[1] != charges.shape[0]:
-        raise ArgumentError(f"number of elements in e_field_box is different than number of charges in charges array, should be the same. " +
-        f"cart_e_field_box.shape = {cart_e_field_box.shape} charges.shape = {charges.shape}")
+def get_rand_coord(cart_e_field_box):
     rand_index = get_rand_index(cart_e_field_box)
-    charge = charges[rand_index[1]]   
-    return cart_e_field_box[rand_index[0], rand_index[1], rand_index[2]], charge #cart_e_field_box[6, 1, 2]
+    return cart_e_field_box[rand_index[0], rand_index[1], rand_index[2]] #cart_e_field_box[6, 1, 2]
 
 def get_rand_index(cart_e_field_box):
     rand_index = np.random.randint(1, cart_e_field_box.shape)
-    print("rand index", rand_index)   
+    print("rand coord index = ", rand_index)  
     return rand_index    
 
 """ 
-(7, 5, 12, 3)
+shape of e field box: (7, 5, 12, 3)
 (unit cell, element, translation, xyz)
 """
 # converts 7 u.c. to cartesian coord
