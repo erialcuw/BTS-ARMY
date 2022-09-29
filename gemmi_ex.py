@@ -7,7 +7,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# 10 atoms calculate E field by hand and then compute using program
+# TODO: expand box size by learning translations from Boyang
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
