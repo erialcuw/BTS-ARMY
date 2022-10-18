@@ -7,7 +7,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# TODO: expand box size by learning translations from Boyang
+# TODO: are translations [1 0 0] etc also in the units of angstroms? or what is the distance btwn centers of the unit cells?
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
@@ -20,7 +20,10 @@ def main():
     print("cart_xyz", cart_xyz)    
 
     e_field_box = np.array(get_translated_cells(unit_cell))
-    e_field_box = np.append(e_field_box, np.array([unit_cell]), axis=0)
+    print(e_field_box.shape)
+    unit_cell = np.array([unit_cell])
+
+    e_field_box = np.append(e_field_box, unit_cell, axis=0)
     print(e_field_box.shape)
     cart_e_field_box = get_cart_e_field_box(e_field_box)
     
@@ -89,25 +92,37 @@ def get_cart_e_field_box(e_field_box):
 
 # label the 6 translated unit cells
 def get_translated_cells(unit_cell):
-    a_pos, a_neg, b_pos, b_neg, c_pos, c_neg = ([] for _ in range(6))
-    for element in unit_cell: 
-        ap, an, bp, bn, cp, cn = translate_element(element)
-        a_pos.append(ap)
-        a_neg.append(an)
-        b_pos.append(bp)
-        b_neg.append(bn)
-        c_pos.append(cp)
-        c_neg.append(cn)
-    return np.array(a_pos), np.array(a_neg), np.array(b_pos), np.array(b_neg), np.array(c_pos), np.array(c_neg)
-
+    translated_unit_cells = []
+    for scalar in [1,2,3]:
+        a_pos, a_neg, b_pos, b_neg, c_pos, c_neg = ([] for _ in range(6))
+        for element in unit_cell: 
+            ap, an, bp, bn, cp, cn = translate_element(element, scalar)
+            a_pos.append(ap)
+            a_neg.append(an)
+            b_pos.append(bp)
+            b_neg.append(bn)
+            c_pos.append(cp)
+            c_neg.append(cn)
+        translated_unit_cells.extend([a_pos, a_neg, b_pos, b_neg, c_pos, c_neg])
+    return np.array(translated_unit_cells)
+"""
+create unit cell for every i value and store unit cell in a rows x 3 array
+do not need to worry abt saving unit cells separately
+[i 0 0]
+[-i 0 0]
+[0 i 0]
+[0 -i 0]
+[0 0 i]
+[0 0 -i]
+"""
 # creates translated unit cells composed of 5 elements of 12x3 matrices
-def translate_element(element): #12 x 3, goal: 420 xyz coords 
-    a_pos = np.array([[1, 0, 0]])
-    a_neg = np.array([[-1, 0, 0]])
-    b_pos = np.array([[0, 1, 0]])
-    b_neg = np.array([[0, -1, 0]])
-    c_pos = np.array([[0, 0, 1]])
-    c_neg = np.array([[0, 0, -1]])
+def translate_element(element, scalar): #12 x 3, goal: 420 xyz coords 
+    a_pos = np.array([[scalar, 0, 0]]) # 2 0 0
+    a_neg = np.array([[-scalar, 0, 0]]) # -2 0 0
+    b_pos = np.array([[0, scalar, 0]])
+    b_neg = np.array([[0, -scalar, 0]])
+    c_pos = np.array([[0, 0, scalar]])
+    c_neg = np.array([[0, 0, -scalar]])
     a_pos_cell = element + np.repeat(a_pos, 12, axis=0)
     a_neg_cell = element + np.repeat(a_neg, 12, axis=0)
     b_pos_cell = element + np.repeat(b_pos, 12, axis=0)
