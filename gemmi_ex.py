@@ -7,7 +7,8 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# TODO: are translations [1 0 0] etc also in the units of angstroms? or what is the distance btwn centers of the unit cells?
+# TODO: write out 26 translations, change it to be in units of cell lengths
+# can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
