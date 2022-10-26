@@ -22,12 +22,12 @@ def main():
 
     e_field_box = np.array(get_translated_cells(unit_cell))
     print(e_field_box.shape)
-    unit_cell = np.array([unit_cell])
 
-    e_field_box = np.append(e_field_box, unit_cell, axis=0)
+    e_field_box = np.append(e_field_box, [unit_cell], axis=0)
     print(e_field_box.shape)
+    print(e_field_box[0])
     cart_e_field_box = get_cart_e_field_box(e_field_box)
-    
+
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([2*1.6e-19, 4*1.6e-19, 4*1.6e-19, -2*1.6e-19, -2*1.6e-19])
     rand_coord = get_rand_coord(cart_e_field_box)
@@ -93,67 +93,30 @@ def get_cart_e_field_box(e_field_box):
 
 # label the 6 translated unit cells
 def get_translated_cells(unit_cell):
-    translated_unit_cells = []
-    a_pos, a_neg, b_pos, b_neg, c_pos, c_neg = ([] for _ in range(6))
+    translated_unit_cells = [[] for _ in range(26)]
     for element in unit_cell: 
-        ap, an, bp, bn, cp, cn = translate_element(element, cell_length_a_b=11.671, cell_length_c=5.833)
-        a_pos.append(ap)
-        a_neg.append(an)
-        b_pos.append(bp)
-        b_neg.append(bn)
-        c_pos.append(cp)
-        c_neg.append(cn)
-    translated_unit_cells.extend([a_pos, a_neg, b_pos, b_neg, c_pos, c_neg])
-    return np.array(translated_unit_cells)
-"""
-create unit cell for every i value and store unit cell in a rows x 3 array
-do not need to worry abt saving unit cells separately
-[i 0 0]
-[-i 0 0]
-[0 i 0]
-[0 -i 0]
-[0 0 i]
-[0 0 -i]
-"""
-# creates 26 translated unit cells composed of 5 elements of 12x3 matrices
-def translate_element(element, cell_length_a_b, cell_length_c):
-    a_pos = np.array([[cell_length_a_b, 0, 0]]) # 2 0 0
-    a_neg = np.array([[-cell_length_a_b, 0, 0]]) # -2 0 0
-    b_pos = np.array([[0, cell_length_a_b, 0]])
-    b_neg = np.array([[0, -cell_length_a_b, 0]])
-    c_pos = np.array([[0, 0, cell_length_c]])
-    c_neg = np.array([[0, 0, -cell_length_c]])
-    # x y z (1 0 -1) -> 27 permutations - (0 0 0) = 26
-    # all_arrays = np.array([
-    # [-cell_length_a_b, -cell_length_a_b, -cell_length_c],
-    # [cell_length_a_b, cell_length_a_b, cell_length_c],
-    # [cell_length_a_b, cell_length_a_b, -cell_length_c],
-    # [cell_length_a_b, -cell_length_a_b, -cell_length_c],
-    # [-cell_length_a_b, cell_length_a_b, -cell_length_c],
-    # [-cell_length_a_b, cell_length_a_b, cell_length_c], 
-    # [-cell_length_a_b, -cell_length_a_b, cell_length_c],
-    # [cell_length_a_b, -cell_length_a_b, cell_length_c],
-    # [cell_length_a_b, cell_length_a_b, 0],
-    # [-cell_length_a_b, -cell_length_a_b, 0], 
-    # [cell_length_a_b, -cell_length_a_b, 0],
-    # [-cell_length_a_b, cell_length_a_b, 0],
-    # [0, cell_length_a_b, cell_length_a_b],
-    # [0, -cell_length_a_b, -cell_length_a_b]
-    # [0, -cell_length_a_b, cell_length_a_b],
-    # [0, cell_length_a_b, -cell_length_a_b],
-    # [cell_length_a_b, 0, cell_length_c],
-    # [-cell_length_a_b, 0, -cell_length_c],
-    # [-cell_length_a_b, 0, cell_length_c],
-    # [cell_length_a_b, 0, -cell_length_c]])
-    # for translations in all_arrays:
+        translated_elements = translate_element(element, cell_length_a_b=11.671e-10, cell_length_c=5.833e-10)
+        for i, e in enumerate(translated_elements):
+            translated_unit_cells[i].append(e)
+    return translated_unit_cells
 
-    a_pos_cell = element + np.repeat(a_pos, 12, axis=0)
-    a_neg_cell = element + np.repeat(a_neg, 12, axis=0)
-    b_pos_cell = element + np.repeat(b_pos, 12, axis=0)
-    b_neg_cell = element + np.repeat(b_neg, 12, axis=0)
-    c_pos_cell = element + np.repeat(c_pos, 12, axis=0)
-    c_neg_cell = element + np.repeat(c_neg, 12, axis=0)
-    return a_pos_cell, a_neg_cell, b_pos_cell, b_neg_cell, c_pos_cell, c_neg_cell
+# gets translations for a single element
+def translate_element(element, cell_length_a_b, cell_length_c):
+    translation_permutations = get_translation_permutations(cell_length_a_b, cell_length_c)
+    translated_elements = []
+    for translation in translation_permutations:
+        translated_elements.append(element + np.repeat([translation], 12, axis=0))
+    return translated_elements
+
+#creates 26 directional permutations excluding (0, 0, 0)
+def get_translation_permutations(cell_length_a_b, cell_length_c):
+    directions = [0, 1, -1]
+    all_translations = []
+    for x in directions:
+        for y in directions:
+            for z in directions:
+                all_translations.append([cell_length_a_b * x, cell_length_a_b * y, cell_length_c * z])
+    return all_translations[1:]
 
 # extracts HEX atom site fract & cell length from CIF file
 def get_hex_coords_by_element(block):
