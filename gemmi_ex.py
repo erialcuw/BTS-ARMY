@@ -7,7 +7,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# TODO: write out 26 translations, change it to be in units of cell lengths
+# TODO: figure out the 1/2 in the z coord
 # can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
 def main():
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
