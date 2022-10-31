@@ -7,32 +7,34 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# TODO: figure out the 1/2 in the z coord
+# TODO: translate fract val by 1/2. then multiply by cell length
 # can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
 def main():
+    np.set_printoptions(precision=2, suppress=True)
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
-    hex_coords_by_element = get_hex_coords_by_element(block)
-    hex_transformation_mat = get_hex_transformation_matrix(block)    
-    unit_cell = np.array(get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element))
-    print("hex_xyz=", hex_coords_by_element)
-    print()
-    cart_xyz = hex_to_cart_np(hex_coords_by_element)
-    print("cart_xyz", cart_xyz)    
 
-    e_field_box = np.array(get_translated_cells(unit_cell))
-    print(e_field_box.shape)
+    hex_coords_by_element = get_hex_coords_by_element(block) # 5 x 3
+    cell_lengths = get_cell_lengths(block) # 3 x 1
+    hex_transformation_mat = get_hex_transformation_matrix(block) # 12 x 3
 
-    e_field_box = np.append(e_field_box, [unit_cell], axis=0)
-    print(e_field_box.shape)
-    print(e_field_box[0])
+    unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element, cell_lengths) # 5 x 12 x 3
+    print(unit_cell.shape, "Unit cell should be 5x12x3")
+    translated_unit_cells = get_translated_cells(unit_cell, cell_lengths)
+    print(translated_unit_cells.shape, "Translated unit cells should be (26,5,12,3) due to 26 translations")
+
+    e_field_box = np.append([unit_cell], translated_unit_cells, axis=0)
+    print(e_field_box.shape, "E field box (translations + OG UC) shape should be (27,5,12,3)")
+    print("Example of Ba_1(untranslated)\n", e_field_box[0][0])
+    last_translation = get_translation_permutations(cell_lengths)[-1]
+    print(f"Example of Ba_1(translated({last_translation}))\n", e_field_box[-1][0])
     cart_e_field_box = get_cart_e_field_box(e_field_box)
+    print("Cartesian Example of Ba_1(untranslated)\n", cart_e_field_box[0][0])
+    print(f"Cartesian Example of Ba_1(translated({last_translation}))\n", cart_e_field_box[-1][0])
 
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([2*1.6e-19, 4*1.6e-19, 4*1.6e-19, -2*1.6e-19, -2*1.6e-19])
     rand_coord = get_rand_coord(cart_e_field_box)
-    print("rand coord =", rand_coord)
-    print()
     print("E field [V/m] = ", f"{calc_e_field(cart_e_field_box, rand_coord, charges):.3e}")
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
@@ -73,7 +75,6 @@ def get_rand_coord(cart_e_field_box):
 #gets index of random coordinate
 def get_rand_index(cart_e_field_box):
     rand_index = np.random.randint(1, cart_e_field_box.shape)
-    print("rand coord index = ", rand_index)  
     return rand_index    
 
 """ 
@@ -86,44 +87,45 @@ def get_cart_e_field_box(e_field_box):
     for unit_cell in e_field_box:
         cart_unit_cell = []
         for element in unit_cell:
-            cart_unit_cell.append(hex_to_cart_np(element))   
+            cart_unit_cell.append(hex_to_cart(element))   
         cart_e_field_box.append(cart_unit_cell)
-    cart_e_field_box = np.array(cart_e_field_box)
-    return cart_e_field_box
+    return np.array(cart_e_field_box)
 
 # label the 6 translated unit cells
-def get_translated_cells(unit_cell):
+def get_translated_cells(unit_cell, cell_lengths):
     translated_unit_cells = [[] for _ in range(26)]
     for element in unit_cell: 
-        translated_elements = translate_element(element, cell_length_a_b=11.671e-10, cell_length_c=5.833e-10)
+        translated_elements = translate_element(element, cell_lengths)
         for i, e in enumerate(translated_elements):
             translated_unit_cells[i].append(e)
-    return translated_unit_cells
+    return np.array(translated_unit_cells)
 
 # gets translations for a single element
-def translate_element(element, cell_length_a_b, cell_length_c):
-    translation_permutations = get_translation_permutations(cell_length_a_b, cell_length_c)
+def translate_element(element, cell_lengths):
+    translation_permutations = get_translation_permutations(cell_lengths)
     translated_elements = []
     for translation in translation_permutations:
         translated_elements.append(element + np.repeat([translation], 12, axis=0))
     return translated_elements
 
 #creates 26 directional permutations excluding (0, 0, 0)
-def get_translation_permutations(cell_length_a_b, cell_length_c):
+def get_translation_permutations(cell_lengths):
     directions = [0, 1, -1]
     all_translations = []
     for x in directions:
         for y in directions:
             for z in directions:
-                all_translations.append([cell_length_a_b * x, cell_length_a_b * y, cell_length_c * z])
+                all_translations.append([cell_lengths[0] * x, cell_lengths[1] * y, cell_lengths[2] * z])
     return all_translations[1:]
 
 # extracts HEX atom site fract & cell length from CIF file
+# each row(5) represents a single element
+# each column (3) represents an xyz direction
 def get_hex_coords_by_element(block):
     hex_coords_by_element = np.array([
-        get_plane('_atom_site_fract_x', '_cell_length_a', block),
-        get_plane('_atom_site_fract_y', '_cell_length_b', block),
-        get_plane('_atom_site_fract_z', '_cell_length_c', block)
+        get_fract_vals('_atom_site_fract_x', block),
+        get_fract_vals('_atom_site_fract_y', block),
+        get_fract_vals('_atom_site_fract_z', block)
     ]).transpose()
     # [Ba_1 Ti_1 Ti_2 S_1 S_2]
     return hex_coords_by_element
@@ -134,22 +136,18 @@ def get_hex_transformation_matrix(block):
     return hex_transformation_mat
 
 # converts hex to cart coordinates np.array
-def hex_to_cart_np(hexagonal_coords):
+def hex_to_cart(hexagonal_coords):
     hex_to_cart_mat = np.array([[1, -.5, 0], [math.sqrt(3)/2, 0, 0], [0, 0, 1]])
     cartesian_coord = np.dot(hex_to_cart_mat, hexagonal_coords.T)
     return cartesian_coord.T
 
-# converts hex to cart coordinates sympy array
-def hex_to_cart_sympy(hexagonal_coords):
-    hex_to_cart_mat = Matrix([[1, -.5, 0], [math.sqrt(3)/2, 0, 0], [0, 0, 1]])
-    cartesian_coords = hex_to_cart_mat * hexagonal_coords.T
-    return cartesian_coords.T
 
 # builds matrix of singular unit cell for each element's symm operation
-def get_unit_cell_coord(transformation_mat, coords_by_element):
+def get_unit_cell_coord(transformation_mat, coords_by_element, cell_lengths):
     unit_cell = []
     for element in coords_by_element:
-        symmetry_operation_result = apply_transformations(transformation_mat, element) # 12x3, 1x3
+        hexagonal_coords = apply_transformations(transformation_mat, element) # 12x3, 1x3
+        symmetry_operation_result = multiply_by_cell_lengths(hexagonal_coords, cell_lengths)
         unit_cell.append(symmetry_operation_result)
     return np.array(unit_cell)
 
@@ -158,6 +156,12 @@ def apply_transformations(transformation_mat, xyz):
     for val, symb in zip(xyz, ['x','y','z']):
         transformation_mat = transformation_mat.subs(Symbol(symb), val)
     return np.array(transformation_mat)
+
+# Multiply each column (x,y,z) by corresponding cell_lengths (a,b,c)
+def multiply_by_cell_lengths(hexagonal_coords, cell_lengths):
+    for i, cell_length in enumerate(cell_lengths):
+        hexagonal_coords[:, i] *= cell_length
+    return hexagonal_coords
     
 # extracts symmetry operations from CIF file into a matrix of strings
 def get_transformation_mat(symm_operations, block):
@@ -168,11 +172,18 @@ def get_transformation_mat(symm_operations, block):
     ])
     return transformation_expressions_per_axis
     
-# extracts fract site values and cell length and multiple for xyz coord
-def get_plane(site_fract_name, cell_length_name, block):
-    fract_vals = [as_number(val) for val in block.find_loop(site_fract_name)]
-    cell_length = as_number(block.find_value(cell_length_name))
-    return [(i * cell_length * 10e-10) for i in fract_vals]
+# extracts fract site values
+def get_fract_vals(site_fract_name, block):
+    return [as_number(val) for val in block.find_loop(site_fract_name)]
+
+# extra all cell lengths (a,b,c)
+def get_cell_lengths(block):
+    cell_length_names = ['_cell_length_a', '_cell_length_b', '_cell_length_c']
+    return [get_cell_length(name, block) for name in cell_length_names]
+
+#extract single cell length given name
+def get_cell_length(cell_length_name, block):
+    return as_number(block.find_value(cell_length_name)) * 1e-10
 
 # converts strings to numbers 
 def as_number(num_str):
