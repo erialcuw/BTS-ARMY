@@ -10,7 +10,8 @@ from sympy import Matrix, Symbol
 # TODO: translate fract val by 1/2. then multiply by cell length
 # can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
 def main():
-    np.set_printoptions(precision=2, suppress=True)
+    np.set_printoptions(precision=4)
+
     doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
     block = doc.sole_block()  # CIF has exactly one block
 
@@ -35,7 +36,7 @@ def main():
     # Ba = 2+, Ti = 4+, S = 2-
     charges = np.array([2*1.6e-19, 4*1.6e-19, 4*1.6e-19, -2*1.6e-19, -2*1.6e-19])
     rand_coord = get_rand_coord(cart_e_field_box)
-    print("E field [V/m] = ", f"{calc_e_field(cart_e_field_box, rand_coord, charges):.3e}")
+    print("E field [V/m] = ", f"{calc_e_field(cart_e_field_box, rand_coord, charges):.4e}")
 
     """ UNCOMMENT TO PLOT IN CARTESIAN
     fig = plt.figure()
@@ -155,7 +156,7 @@ def get_unit_cell_coord(transformation_mat, coords_by_element, cell_lengths):
 def apply_transformations(transformation_mat, xyz):
     for val, symb in zip(xyz, ['x','y','z']):
         transformation_mat = transformation_mat.subs(Symbol(symb), val)
-    return np.array(transformation_mat)
+    return np.array(transformation_mat).astype(np.float128)
 
 # Multiply each column (x,y,z) by corresponding cell_lengths (a,b,c)
 def multiply_by_cell_lengths(hexagonal_coords, cell_lengths):
