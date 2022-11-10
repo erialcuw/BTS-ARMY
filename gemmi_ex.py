@@ -46,8 +46,10 @@ def calc_dipole_moment(e_field_box, rand_coord, charges):
         for element, charge in zip(unit_cell, charges):
             for coord in element:
                 if not np.array_equal(coord, rand_coord):
-                    magnitude = charge * math.sqrt(((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2))
-                    dipole_moment_total += magnitude
+                    px = charge * (coord[0] - rand_coord[0])
+                    py = charge * (coord[1] - rand_coord[1])
+                    pz = charge * (coord[2] - rand_coord[2])
+                    dipole_moment_total += math.sqrt((px ** 2 + py ** 2 + pz ** 2))
     return dipole_moment_total
 
 #calculates electric field w.r.t. random coordinate value
