@@ -7,7 +7,7 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# TODO: translate fract val by 1/2. then multiply by cell length
+# TODO: how do I treat the r in dipole moment?
 # can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
 def main():
     np.set_printoptions(precision=4)
@@ -37,22 +37,18 @@ def main():
     charges = np.array([2*1.6e-19, 4*1.6e-19, 4*1.6e-19, -2*1.6e-19, -2*1.6e-19])
     rand_coord = get_rand_coord(cart_e_field_box)
     print("E field [V/m] = ", f"{calc_e_field(cart_e_field_box, rand_coord, charges):.4e}")
+    print('Electric dipole moment [C m]', f"{calc_dipole_moment(cart_e_field_box, rand_coord, charges):.4e}")
 
-    """ UNCOMMENT TO PLOT IN CARTESIAN
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    ax.set_xlabel('X Axis')
-    ax.set_ylabel('Y Axis')
-    ax.set_zlabel('Z Axis')
-    labels = block.find_loop('_atom_site_label')
-    
-    for element, label in zip(unit_cell, labels):
-        ax.scatter(element[:, 0], element[:, 1], element[:, 2], label=label)
-        #plt.show()
-
-    ax.legend()
-    plt.show()
-    """
+#calculate summation of electric dipole moment [C m]
+def calc_dipole_moment(e_field_box, rand_coord, charges):
+    dipole_moment_total = 0
+    for unit_cell in e_field_box:
+        for element, charge in zip(unit_cell, charges):
+            for coord in element:
+                if not np.array_equal(coord, rand_coord):
+                    magnitude = charge * math.sqrt(((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2))
+                    dipole_moment_total += magnitude
+    return dipole_moment_total
 
 #calculates electric field w.r.t. random coordinate value
 def calc_e_field(e_field_box, rand_coord, charges):
@@ -92,26 +88,28 @@ def get_cart_e_field_box(e_field_box):
         cart_e_field_box.append(cart_unit_cell)
     return np.array(cart_e_field_box)
 
-# label the 6 translated unit cells
+# creates array of unit cells  
 def get_translated_cells(unit_cell, cell_lengths):
-    translated_unit_cells = [[] for _ in range(26)]
+    translated_unit_cells = [] #need to generalize this to # of permutations generated from get_translation_permutations function
     for element in unit_cell: 
         translated_elements = translate_element(element, cell_lengths)
         for i, e in enumerate(translated_elements):
+            if i >= len(translated_unit_cells):
+                translated_unit_cells.append([])
             translated_unit_cells[i].append(e)
     return np.array(translated_unit_cells)
 
-# gets translations for a single element
+# gets x translations (P63mc has 12) for a single element
 def translate_element(element, cell_lengths):
     translation_permutations = get_translation_permutations(cell_lengths)
     translated_elements = []
     for translation in translation_permutations:
         translated_elements.append(element + np.repeat([translation], 12, axis=0))
-    return translated_elements
+    return translated_elements # [directions^directions - 1, 5, 12, 3]
 
 #creates 26 directional permutations excluding (0, 0, 0)
 def get_translation_permutations(cell_lengths):
-    directions = [0, 1, -1]
+    directions = [0, 1, -1, 2]
     all_translations = []
     for x in directions:
         for y in directions:
@@ -141,7 +139,6 @@ def hex_to_cart(hexagonal_coords):
     hex_to_cart_mat = np.array([[1, -.5, 0], [math.sqrt(3)/2, 0, 0], [0, 0, 1]])
     cartesian_coord = np.dot(hex_to_cart_mat, hexagonal_coords.T)
     return cartesian_coord.T
-
 
 # builds matrix of singular unit cell for each element's symm operation
 def get_unit_cell_coord(transformation_mat, coords_by_element, cell_lengths):
@@ -177,7 +174,7 @@ def get_transformation_mat(symm_operations, block):
 def get_fract_vals(site_fract_name, block):
     return [as_number(val) for val in block.find_loop(site_fract_name)]
 
-# extra all cell lengths (a,b,c)
+# extracts all cell lengths (a,b,c)
 def get_cell_lengths(block):
     cell_length_names = ['_cell_length_a', '_cell_length_b', '_cell_length_c']
     return [get_cell_length(name, block) for name in cell_length_names]
