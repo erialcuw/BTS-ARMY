@@ -7,7 +7,10 @@ import math
 from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
-# TODO: how do I treat the r in dipole moment?
+# TODO: 
+# 1. test code with cif file that has inversion symmetry P63mmc
+# 2. function that iterates thru every coord and finds the coord w/ the lowest e field
+# divide dipole moment by volume to make dimensionless
 # can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
 def main():
     np.set_printoptions(precision=4)
@@ -22,10 +25,10 @@ def main():
     unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element, cell_lengths) # 5 x 12 x 3
     print(unit_cell.shape, "Unit cell should be 5x12x3")
     translated_unit_cells = get_translated_cells(unit_cell, cell_lengths)
-    print(translated_unit_cells.shape, "Translated unit cells should be (26,5,12,3) due to 26 translations")
+    print(translated_unit_cells.shape, "Translated unit cells should be (63,5,12,3) due to 63 translations")
 
     e_field_box = np.append([unit_cell], translated_unit_cells, axis=0)
-    print(e_field_box.shape, "E field box (translations + OG UC) shape should be (27,5,12,3)")
+    print(e_field_box.shape, "E field box (translations + OG UC) shape should be (63,5,12,3)")
     print("Example of Ba_1(untranslated)\n", e_field_box[0][0])
     last_translation = get_translation_permutations(cell_lengths)[-1]
     print(f"Example of Ba_1(translated({last_translation}))\n", e_field_box[-1][0])
