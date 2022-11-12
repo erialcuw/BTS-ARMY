@@ -8,7 +8,9 @@ from matplotlib import pyplot as plt
 from sympy import Matrix, Symbol
 
 # TODO: 
-# 1. test code with cif file that has inversion symmetry P63mmc
+# 0.5 create simulation of ti atoms in a circle, should be zero
+# 1. test code with cif file that has inversion symmetry P63mmc or cube (BTO)
+# 1.5 check center of cube and move point to other location to check if e field changes
 # 2. function that iterates thru every coord and finds the coord w/ the lowest e field
 # divide dipole moment by volume to make dimensionless
 # can also use BC to expand the box, first expand in x, then in y, then in z, total 6 steps
