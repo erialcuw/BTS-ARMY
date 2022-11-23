@@ -1,11 +1,8 @@
-from argparse import ArgumentError
-from calendar import c
-import sys
-from gemmi import cif
 import numpy as np
 import math
 from matplotlib import pyplot as plt
-from sympy import Matrix, Symbol
+from sympy import Symbol
+from CifExtractor import CifExtractor
 
 # TODO: 
 # 0.5 create simulation of ti atoms in a circle, should be zero
@@ -17,12 +14,11 @@ from sympy import Matrix, Symbol
 def main():
     np.set_printoptions(precision=4)
 
-    doc = cif.read_file('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
-    block = doc.sole_block()  # CIF has exactly one block
+    cif = CifExtractor('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
 
-    hex_coords_by_element = get_hex_coords_by_element(block) # 5 x 3
-    cell_lengths = get_cell_lengths(block) # 3 x 1
-    hex_transformation_mat = get_hex_transformation_matrix(block) # 12 x 3
+    hex_coords_by_element = cif.get_hex_coords_by_element() # 5 x 3
+    cell_lengths = cif.get_cell_lengths() # 3 x 1
+    hex_transformation_mat = cif.get_hex_transformation_matrix() # 12 x 3
 
     unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element, cell_lengths) # 5 x 12 x 3
     print(unit_cell.shape, "Unit cell should be 5x12x3")
@@ -124,23 +120,6 @@ def get_translation_permutations(cell_lengths):
                 all_translations.append([cell_lengths[0] * x, cell_lengths[1] * y, cell_lengths[2] * z])
     return all_translations[1:]
 
-# extracts HEX atom site fract & cell length from CIF file
-# each row(5) represents a single element
-# each column (3) represents an xyz direction
-def get_hex_coords_by_element(block):
-    hex_coords_by_element = np.array([
-        get_fract_vals('_atom_site_fract_x', block),
-        get_fract_vals('_atom_site_fract_y', block),
-        get_fract_vals('_atom_site_fract_z', block)
-    ]).transpose()
-    # [Ba_1 Ti_1 Ti_2 S_1 S_2]
-    return hex_coords_by_element
-
-# extracts 12 HEX symmetry operations from CIF file 
-def get_hex_transformation_matrix(block):
-    hex_transformation_mat = get_transformation_mat('_space_group_symop_operation_xyz', block)
-    return hex_transformation_mat
-
 # converts hex to cart coordinates np.array
 def hex_to_cart(hexagonal_coords):
     hex_to_cart_mat = np.array([[1, -.5, 0], [math.sqrt(3)/2, 0, 0], [0, 0, 1]])
@@ -167,39 +146,6 @@ def multiply_by_cell_lengths(hexagonal_coords, cell_lengths):
     for i, cell_length in enumerate(cell_lengths):
         hexagonal_coords[:, i] *= cell_length
     return hexagonal_coords
-    
-# extracts symmetry operations from CIF file into a matrix of strings
-def get_transformation_mat(symm_operations, block):
-    transformation_expressions = [cif.as_string(i) for i in (block.find_loop(symm_operations))]
-    transformation_expressions_per_axis = Matrix([ 
-        [coord_expr.strip() for coord_expr in expr.split(',')] 
-        for expr in transformation_expressions
-    ])
-    return transformation_expressions_per_axis
-    
-# extracts fract site values
-def get_fract_vals(site_fract_name, block):
-    return [as_number(val) for val in block.find_loop(site_fract_name)]
-
-# extracts all cell lengths (a,b,c)
-def get_cell_lengths(block):
-    cell_length_names = ['_cell_length_a', '_cell_length_b', '_cell_length_c']
-    return [get_cell_length(name, block) for name in cell_length_names]
-
-#extract single cell length given name
-def get_cell_length(cell_length_name, block):
-    return as_number(block.find_value(cell_length_name)) * 1e-10
-
-# converts strings to numbers 
-def as_number(num_str):
-    return cif.as_number(remove_stddev(num_str))
-
-# removes std. dev from CIF file values
-def remove_stddev(num_str):
-    index_of_stddev = num_str.find('(')
-    if index_of_stddev >= 0:
-        return num_str[:index_of_stddev]
-    return num_str #string
 
 if __name__ == '__main__':
     main()
