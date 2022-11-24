@@ -18,16 +18,16 @@ def calc_dipole_moment(e_field_box, rand_coord, charges):
 #calculates electric field w.r.t. random coordinate value
 def calc_e_field(e_field_box, rand_coord, charges):
     k = 9e9 # N * m^2/C^2
-    e_total = 0 # V/m
+    Ex, Ey, Ez = 0,0,0 # V/m
     for unit_cell in e_field_box:
         for element, charge in zip(unit_cell, charges):
             for coord in element:
                 if not np.array_equal(coord, rand_coord):
                     magnitude = k * charge / (((coord[0] - rand_coord[0]) ** 2 + (coord[1] - rand_coord[1]) ** 2 + (coord[2] - rand_coord[2]) ** 2)**(3/2))
-                    e_total += math.sqrt(((magnitude * (coord[0] - rand_coord[0])) ** 2) 
-                    + ((magnitude * (coord[1] - rand_coord[1])) ** 2) 
-                    + ((magnitude * (coord[2] - rand_coord[2])) ** 2))
-    return e_total
+                    Ex += (coord[0] - rand_coord[0]) * magnitude
+                    Ey += (coord[1] - rand_coord[1]) * magnitude
+                    Ez += (coord[2] - rand_coord[2]) * magnitude
+    return np.array([Ex, Ey, Ez])
 
 """ 
 shape of e field box: (7, 5, 12, 3)
@@ -43,11 +43,10 @@ def get_cart_e_field_box(e_field_box):
         cart_e_field_box.append(cart_unit_cell)
     return np.array(cart_e_field_box)
 
-# creates array of unit cells  
-def get_translated_cells(unit_cell, cell_lengths, directions):
+def get_translated_cells(unit_cell, translation_permutations):
     translated_unit_cells = [] #need to generalize this to # of permutations generated from get_translation_permutations function
     for element in unit_cell: 
-        translated_elements = translate_element(element, cell_lengths, directions)
+        translated_elements = translate_element(element, translation_permutations)
         for i, e in enumerate(translated_elements):
             if i >= len(translated_unit_cells):
                 translated_unit_cells.append([])
@@ -55,14 +54,13 @@ def get_translated_cells(unit_cell, cell_lengths, directions):
     return np.array(translated_unit_cells)
 
 # gets x translations (P63mc has 12) for a single element
-def translate_element(element, cell_lengths, directions):
-    translation_permutations = get_translation_permutations(cell_lengths, directions)
+def translate_element(element, translation_permutations):
     translated_elements = []
     for translation in translation_permutations:
         translated_elements.append(element + np.repeat([translation], len(element), axis=0))
     return translated_elements # [directions^directions - 1, 5, 12, 3]
 
-#creates 26 directional permutations excluding (0, 0, 0)
+#creates (directions^directions - 1) directional permutations b.c excluding (0, 0, 0)
 def get_translation_permutations(cell_lengths, directions):
     all_translations = []
     for x in directions:
@@ -70,6 +68,16 @@ def get_translation_permutations(cell_lengths, directions):
             for z in directions:
                 all_translations.append([cell_lengths[0] * x, cell_lengths[1] * y, cell_lengths[2] * z])
     return all_translations[1:]
+
+# generates permutations e.g. 6 for given directions [1, -1], (100, 001 etc)
+def get_one_choice_permutations(cell_lengths, directions):
+    all_translations = []
+    for dir in directions:
+        for i in range(len(cell_lengths)):
+            permutation = [0 for _ in cell_lengths]
+            permutation[i] = dir * cell_lengths[i]
+            all_translations.append(permutation)
+    return all_translations
 
 # converts hex to cart coordinates np.array
 def hex_to_cart(hexagonal_coords):

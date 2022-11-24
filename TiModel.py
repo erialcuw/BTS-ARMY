@@ -25,12 +25,14 @@ def main():
 
     unit_cell = get_unit_cell_coord(hex_transformation_mat, hex_coords_by_element, cell_lengths) # 1 x 12 x 3
     print(unit_cell.shape, "Unit cell should be 1x1x3")
-    directions = [0, 1, -1]
-    translated_unit_cells = get_translated_cells(unit_cell, cell_lengths, directions)
-    print(translated_unit_cells.shape, "Translated unit cells should be (26,1,1,3) due to 26 translations")
+
+    directions = [1, -1]
+    translation_permutations = get_one_choice_permutations(cell_lengths, directions)
+    translated_unit_cells = get_translated_cells(unit_cell, translation_permutations)
+    print(translated_unit_cells.shape, "Translated unit cells should be (6,1,1,3) due to 6 translations")
 
     e_field_box = np.append([unit_cell], translated_unit_cells, axis=0)
-    print(e_field_box.shape, "E field box (translations + OG UC) shape should be (27,1,1,3)")
+    print(e_field_box.shape, "E field box (translations + OG UC) shape should be (6,1,1,3)")
     print("Example of Ti_1(untranslated)\n", e_field_box[0][0])
     last_translation = get_translation_permutations(cell_lengths, directions)[-1]
     print(f"Example of Ti_1(translated({last_translation}))\n", e_field_box[-1][0])
@@ -40,8 +42,9 @@ def main():
 
     # Ti = 4+
     charges = np.array([4*1.6e-19])
-    rand_coord = get_rand_coord(cart_e_field_box)
-    print("E field [V/m] = ", f"{calc_e_field(cart_e_field_box, rand_coord, charges):.4e}")
+    rand_coord = [0,0,0]
+    #rand_coord = get_rand_coord(cart_e_field_box)
+    print("E field [V/m] = ", calc_e_field(cart_e_field_box, rand_coord, charges))
     print('Electric dipole moment [C m]', f"{calc_dipole_moment(cart_e_field_box, rand_coord, charges):.4e}")
 
 #gets random coordinate values
