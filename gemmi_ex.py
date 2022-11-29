@@ -42,6 +42,8 @@ def main():
     print("E field [V/m] = ", calc_e_field(cart_e_field_box, rand_coord, charges))
     print('Electric dipole moment [C m]', f"{calc_dipole_moment(cart_e_field_box, rand_coord, charges):.4e}")
 
+    print("Ti atomic positions", calc_Ti_distance(hex_coords_by_element))
+    
 #gets random coordinate values
 def get_rand_coord(cart_e_field_box):
     rand_index = get_rand_index(cart_e_field_box)

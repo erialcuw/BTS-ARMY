@@ -2,6 +2,26 @@ from sympy import Symbol
 import math
 import numpy as np
 
+#calc distance vector btwn Ti and S6 octahedron for a unit cell with 12 transformations
+def calc_Ti_distance(unit_cell):   
+    Ti01_S_distance = 0
+    Ti02_S_distance = 0
+    for transformation in unit_cell:
+        Ti01_atomic_positions = unit_cell[1][transformation]
+        Ti02_atomic_positions = unit_cell[2][transformation]
+        S01_atomic_positions = unit_cell[3][transformation]
+        Ti01_S_distance += 1/6 * (Ti01_atomic_positions - S01_atomic_positions)
+        Ti02_S_distance += 1/6 * (Ti02_atomic_positions - S01_atomic_positions)
+    return np.array([Ti01_S_distance][Ti02_S_distance])
+
+#calc distance btwn Ba and S12 octahedron
+def calc_Ba_distance(hex_coords_by_element):   
+    Ba_atomic_positions = hex_coords_by_element[0]
+    S02_atomic_positions = hex_coords_by_element[4] 
+
+    Ba_S_distance = 1/12 * (Ba_atomic_positions - S02_atomic_positions) 
+    return Ba_S_distance
+
 #calculate summation of electric dipole moment [C m]
 def calc_dipole_moment(e_field_box, rand_coord, charges):
     dipole_moment_total = 0
