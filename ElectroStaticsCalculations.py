@@ -4,6 +4,7 @@ import numpy as np
 
 #calc distance vector btwn Ti and S6 octahedron for a unit cell with 12 transformations
 def calc_Ti_distance(unit_cell):   
+    
     Ti01_S_distance = 0
     Ti02_S_distance = 0
     for transformation in unit_cell:

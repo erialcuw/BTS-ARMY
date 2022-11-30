@@ -13,7 +13,7 @@ from ElectroStaticsCalculations import *
 def main():
     np.set_printoptions(precision=4)
 
-    cif = CifExtractor('CIF_files/BTS_Plate_300K_P63cm.cif')  # copy all the data from mmCIF file
+    cif = CifExtractor('CIF_files/BTS_Plate_300K_P63cm_uc.cif')  # copy all the data from mmCIF file
 
     hex_coords_by_element = cif.get_hex_coords_by_element() # 5 x 3
     cell_lengths = cif.get_cell_lengths() # 3 x 1
@@ -42,8 +42,9 @@ def main():
     print("E field [V/m] = ", calc_e_field(cart_e_field_box, rand_coord, charges))
     print('Electric dipole moment [C m]', f"{calc_dipole_moment(cart_e_field_box, rand_coord, charges):.4e}")
 
-    print("Ti atomic positions", calc_Ti_distance(hex_coords_by_element))
-    
+    atom_site_matrix = cif.get_atom_site_matrix()
+    print("atom sites = ", atom_site_matrix)
+
 #gets random coordinate values
 def get_rand_coord(cart_e_field_box):
     rand_index = get_rand_index(cart_e_field_box)
