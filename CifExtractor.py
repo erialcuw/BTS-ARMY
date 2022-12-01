@@ -2,7 +2,7 @@ import numpy as np
 from gemmi import cif
 from sympy import Matrix
 
-#TODO: function that extracts _atom_site_label and standard deviations from cif file
+#TODO: function that extracts standard deviations from cif file
 class CifExtractor:
     def __init__(self, file_path):
         doc = cif.read_file(file_path)  # copy all the data from mmCIF file
@@ -16,7 +16,7 @@ class CifExtractor:
     def get_atom_site_matrix(self):
         atom_site_matrix = CifExtractor.get_atom_site_label('_atom_site_label', self.block)
         return atom_site_matrix
-        
+
     # extracts HEX atom site fract & cell length from CIF file
     # each row(5) represents a single element
     # each column (3) represents an xyz direction
@@ -33,6 +33,15 @@ class CifExtractor:
     def get_atom_site_label(atom_sites, block):
         atom_site_labels = [cif.as_string(i) for i in (block.find_loop(atom_sites))]
         return atom_site_labels
+
+    # store std_dev value
+    # divide std_dev value by 10^(# of digits in atomic site fract - len(std_dev value))
+    # consider when atomic site number is 0, and when there are no parantheses
+    def get_std_dev(atomic_site_vals):
+        index_of_stddev = atomic_site_vals.find('(')
+        if index_of_stddev >= 0:
+            return atomic_site_vals[index_of_stddev:] # + zeros in decimal points
+        return atomic_site_vals #string
 
     # extracts symmetry operations from CIF file into a matrix of strings
     def get_transformation_mat(symm_operations, block):
