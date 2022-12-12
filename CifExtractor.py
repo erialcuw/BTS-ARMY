@@ -2,7 +2,8 @@ import numpy as np
 from gemmi import cif
 from sympy import Matrix
 
-#TODO: function that extracts standard deviations from cif file
+#TODO: edit get_std_dev function to take the 5x3 matrix of hex_coord_by_element without the std dev removed already
+# write new function that gets cif file values without using as_number OR rewrite get_fract_vals function to call get_std_dev within it and store the fract and std_dev in separate variables
 class CifExtractor:
     def __init__(self, file_path):
         doc = cif.read_file(file_path)  # copy all the data from mmCIF file
@@ -52,7 +53,7 @@ class CifExtractor:
         ])
         return transformation_expressions_per_axis
 
-    # extracts fract site values
+    # extracts fract site values with std dev removed
     def get_fract_vals(site_fract_name, block):
         return [CifExtractor.as_number(val) for val in block.find_loop(site_fract_name)]
         
