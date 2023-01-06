@@ -1,9 +1,9 @@
 import numpy as np
 from gemmi import cif
 from sympy import Matrix
+import decimal
 
-#TODO: edit get_std_dev function to take the 5x3 matrix of hex_coord_by_element without the std dev removed already
-# write new function that gets cif file values without using as_number OR rewrite get_fract_vals function to call get_std_dev within it and store the fract and std_dev in separate variables
+#TODO: function that extracts standard deviations from cif file
 class CifExtractor:
     def __init__(self, file_path):
         doc = cif.read_file(file_path)  # copy all the data from mmCIF file
@@ -18,7 +18,7 @@ class CifExtractor:
         atom_site_matrix = CifExtractor.get_atom_site_label('_atom_site_label', self.block)
         return atom_site_matrix
 
-    # extracts HEX atom site fract & cell length from CIF file
+    # extracts HEX atom site fract from CIF file
     # each row(5) represents a single element
     # each column (3) represents an xyz direction
     def get_hex_coords_by_element(self):
@@ -35,14 +35,20 @@ class CifExtractor:
         atom_site_labels = [cif.as_string(i) for i in (block.find_loop(atom_sites))]
         return atom_site_labels
 
-    # store std_dev value
-    # divide std_dev value by 10^(# of digits in atomic site fract - len(std_dev value))
-    # consider when atomic site number is 0, and when there are no parantheses
+    # calculates std dev based on atomic fract value extracted
     def get_std_dev(atomic_site_vals):
-        index_of_stddev = atomic_site_vals.find('(')
-        if index_of_stddev >= 0:
-            return atomic_site_vals[index_of_stddev:] # + zeros in decimal points
-        return atomic_site_vals #string
+        std_dev = 0
+        index_of_start = atomic_site_vals.find('(')
+        index_of_end = atomic_site_vals.find(')')
+        if index_of_start >= 0:
+            std_dev_int= int(atomic_site_vals[index_of_start+1 : index_of_end])
+            std_dev = std_dev_int / (10 ** CifExtractor.get_atomic_fract_digits(atomic_site_vals))
+        return std_dev #number
+
+    def get_atomic_fract_digits(atomic_fract_val):
+        digits = decimal.Decimal(CifExtractor.remove_stddev(atomic_fract_val))
+        digits = abs(digits.as_tuple().exponent)
+        return digits
 
     # extracts symmetry operations from CIF file into a matrix of strings
     def get_transformation_mat(symm_operations, block):
