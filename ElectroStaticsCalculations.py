@@ -2,6 +2,7 @@ from sympy import Symbol
 import math
 import numpy as np
 
+# splits atomic site fracs by symbol
 def sorting_atomic_site_fracs(atomic_site_type_symbol, hex_coords_by_element):
     Ba_atomic_fracs = []
     Ti_atomic_fracs = []
@@ -15,26 +16,21 @@ def sorting_atomic_site_fracs(atomic_site_type_symbol, hex_coords_by_element):
             S_atomic_fracs.append(hex_coords_by_element[i])
     return np.array(Ba_atomic_fracs), np.array(Ti_atomic_fracs), np.array(S_atomic_fracs)
 
-#calc distance vector btwn Ti and S6 octahedron for a unit cell with 12 transformations
-def calc_Ti_distance(unit_cell):   
-    
-    Ti01_S_distance = 0
-    Ti02_S_distance = 0
-    for transformation in unit_cell:
-        Ti01_atomic_positions = unit_cell[1][transformation]
-        Ti02_atomic_positions = unit_cell[2][transformation]
-        S01_atomic_positions = unit_cell[3][transformation]
-        Ti01_S_distance += 1/6 * (Ti01_atomic_positions - S01_atomic_positions)
-        Ti02_S_distance += 1/6 * (Ti02_atomic_positions - S01_atomic_positions)
-    return np.array([Ti01_S_distance][Ti02_S_distance])
+#calc displacement vector btwn Ti and S atoms for a given unit cell 
+def calc_Ti_displacement(Ti_atomic_frac, S_atomic_frac):    
+    Ti_displacement = []
+    for Ti_coord in Ti_atomic_frac:
+        for S_coord in S_atomic_frac:
+            Ti_displacement += 1/6 * (Ti_coord - S_coord)
+    return np.array(Ti_displacement)
 
-#calc distance btwn Ba and S12 octahedron
-def calc_Ba_distance(hex_coords_by_element):   
-    Ba_atomic_positions = hex_coords_by_element[0]
-    S02_atomic_positions = hex_coords_by_element[4] 
-
-    Ba_S_distance = 1/12 * (Ba_atomic_positions - S02_atomic_positions) 
-    return Ba_S_distance
+#calc displacement vector btwn Ba and S atoms for a given unit cell 
+def calc_Ba_displacement(Ba_atomic_frac, S_atomic_frac):    
+    Ba_displacement = []
+    for Ba_coord in Ba_atomic_frac:
+        for S_coord in S_atomic_frac:
+            Ba_displacement += 1/6 * (Ba_coord - S_coord)
+    return np.array(Ba_displacement)
 
 #calculate summation of electric dipole moment [C m]
 def calc_dipole_moment(e_field_box, rand_coord, charges):
