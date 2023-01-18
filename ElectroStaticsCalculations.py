@@ -2,6 +2,19 @@ from sympy import Symbol
 import math
 import numpy as np
 
+def sorting_atomic_site_fracs(atomic_site_type_symbol, hex_coords_by_element):
+    Ba_atomic_fracs = []
+    Ti_atomic_fracs = []
+    S_atomic_fracs = []
+    for i, e in enumerate(atomic_site_type_symbol):
+        if e == "Ba":
+            Ba_atomic_fracs.append(hex_coords_by_element[i])
+        elif e == "Ti":
+            Ti_atomic_fracs.append(hex_coords_by_element[i])
+        else:
+            S_atomic_fracs.append(hex_coords_by_element[i])
+    return np.array(Ba_atomic_fracs), np.array(Ti_atomic_fracs), np.array(S_atomic_fracs)
+
 #calc distance vector btwn Ti and S6 octahedron for a unit cell with 12 transformations
 def calc_Ti_distance(unit_cell):   
     
