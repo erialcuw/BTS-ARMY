@@ -20,16 +20,20 @@ def sorting_atomic_site_fracs(atomic_site_type_symbol, hex_coords_by_element):
 def calc_Ti_displacement(Ti_atomic_fracs, S_atomic_frac):    
     Ti_displacement = []
     for Ti_coord in Ti_atomic_fracs:
+        displacement = np.array([0,0,0], dtype='float64')
         for S_coord in S_atomic_frac:
-            Ti_displacement.append(1/6 * (Ti_coord - S_coord))
+            displacement += Ti_coord - S_coord
+        Ti_displacement.append(1/len(S_atomic_frac) * displacement)
     return np.array(Ti_displacement)
 
 #calc displacement vector btwn Ba and S atoms for a given unit cell 
 def calc_Ba_displacement(Ba_atomic_frac, S_atomic_frac):    
     Ba_displacement = []
-    for Ba_coord in enumerate(Ba_atomic_frac):
-        for S_coord in enumerate(S_atomic_frac):
-            Ba_displacement.append(1/6 * (Ba_coord - S_coord))
+    for Ba_coord in Ba_atomic_frac:
+        displacement = np.array([0,0,0], dtype='float64')
+        for S_coord in S_atomic_frac:
+            displacement += Ba_coord - S_coord
+        Ba_displacement.append(1/len(S_atomic_frac) * displacement)
     return np.array(Ba_displacement)
 
 #calculate summation of electric dipole moment [C m]

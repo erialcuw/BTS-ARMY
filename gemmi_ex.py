@@ -53,8 +53,8 @@ def main():
     print("Ti atomic fracs:", atomic_fracs_split[1])
     print("S atomic fracs:", atomic_fracs_split[2])
 
-    Ti_disp = calc_Ti_displacement(atomic_fracs_split[1][0], atomic_fracs_split[2][0])
-    Ba_disp = calc_Ba_displacement(atomic_fracs_split[0][0], atomic_fracs_split[2][0])
+    Ti_disp = calc_Ti_displacement([atomic_fracs_split[1][0]], [atomic_fracs_split[2][0], atomic_fracs_split[2][6]])
+    Ba_disp = calc_Ba_displacement([atomic_fracs_split[0][0]], [atomic_fracs_split[2][0], atomic_fracs_split[2][6]])
     print("Ti disp: ", Ti_disp)
     print("Ba disp: ", Ba_disp)
 
