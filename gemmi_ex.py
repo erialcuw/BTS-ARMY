@@ -49,7 +49,14 @@ def main():
     print("atomic symbols = ", atomic_symbol_mat)
 
     atomic_fracs_split = sorting_atomic_site_fracs(atomic_symbol_mat, hex_coords_by_element)
-    print("atomic fracs:", atomic_fracs_split)
+    print("Ba atomic fracs:", atomic_fracs_split[0])
+    print("Ti atomic fracs:", atomic_fracs_split[1])
+    print("S atomic fracs:", atomic_fracs_split[2])
+
+    Ti_disp = calc_Ti_displacement(atomic_fracs_split[1][0], atomic_fracs_split[2][0])
+    Ba_disp = calc_Ba_displacement(atomic_fracs_split[0][0], atomic_fracs_split[2][0])
+    print("Ti disp: ", Ti_disp)
+    print("Ba disp: ", Ba_disp)
 
 #gets random coordinate values
 def get_rand_coord(cart_e_field_box):
