@@ -10,13 +10,13 @@ import tifffile
  
  
 # Below are some functions for reading Tiff file images and calculating Rocking curve,2D map intensity and Centroid.
-def RockingCurve(run,scan_num,x,y):
+def RockingCurve(run, scan_num,x,y):
     [xmin,xmax]  = x
     [ymin,ymax] = y
     ROI_sum = [0]*(scan_num)   
     for i in range (0,scan_num):
-        filepath = 'Users/clairewu/Documents/F22/BTS-ARMY/'  
-        image = Image.open(filepath+'/S00'+'%d'%run+'/S00'+'%d'%run+'_'+'%d'%i+'.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
+        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'  
+        image = Image.open(f'{filepath}/S{run}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
         image_data = np.array(image)                  
         ROI_sum[i]=np.sum(image_data[xmin:xmax,ymin:ymax])
     ROI_sum_array = np.asarray(ROI_sum)    
@@ -30,8 +30,8 @@ def Intensity2D(run,x_pixel,y_pixel,x,y):
     
     ROI_sum = [0]*(scan_num)
     for i in range (1,scan_num):
-        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY/'
-        image = Image.open(filepath+'/MapScan_'+'%d'%run+'/MapScan_'+'%d'%run+'_'+'%d'%i+'.tiff')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
+        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'
+        image = Image.open(f'{filepath}/S{run}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
         image_data = np.array(image)                    
         
         ROI_sum[i-1]=np.sum(image_data[xmin:xmax,ymin:ymax])
@@ -50,8 +50,8 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
     centroid_y= np.empty(scan_num)
     
     for i in range (1,scan_num):
-        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY/'
-        image = Image.open(filepath+'/MapScan_'+'%d'%run+'/MapScan_'+'%d'%run+'_'+'%d'%i+'.tiff')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
+        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'
+        image = Image.open(f'{filepath}/S{run}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
         image_data = np.array(image)                                                    
     
         com = ndimage.measurements.center_of_mass(image_data[x_min:x_max,y_min:y_max])
@@ -67,7 +67,7 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
 # =============================================================================
 run = 8
  
-filepath = '/Users/clairewu/Documents/F22/BTS-ARMY/'
+filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'
 data = Image.open(filepath+'/S00'+'%d'%run+'/S00'+'%d'%run+'_16.tif')
 image_array = np.array(data)
  
@@ -85,10 +85,10 @@ plt.tight_layout()
 # =============================================================================
 # Rocking curve: use the x and y cordinates of ROI from above   
 # =============================================================================
-run = 8
+run = 625
  
-filepath= '/Users/clairewu/Documents/F22/BTS-ARMY/'
-folderpath = filepath+'/S00'+'%d'%run
+filepath= '/Users/clairewu/Documents/F22/BTS-ARMY'
+folderpath = filepath+'/S'%run
 cnt = 0
 for path in os.listdir(folderpath):
     if os.path.isfile(os.path.join(folderpath,path)):
@@ -101,7 +101,7 @@ x_ROI = [80,380]
 y_ROI = [350,445]
  
 # call the rocking cruve function. 
-RC = RockingCurve(run,num_of_files,x,y)
+RC = RockingCurve(num_of_files,[1, 1028], [1, 512])
 th = np.linspace(16.1,16.5, 41) # These values of theta were used in the experiment.
                                 # This info. can be found in your log book and if not then the spec file.
  
