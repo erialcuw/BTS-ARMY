@@ -11,6 +11,9 @@ conda activate snowflakes
 
 This activates the environment
 
+# Adding new packages / dependencies
+Use `conda install` and then follow the section `Saving environment` to export to the environment.yml file
+
 # Saving environment
 ```
 conda env export > environment.yml

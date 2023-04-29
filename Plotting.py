@@ -1,3 +1,7 @@
+#%%
+# =============================================================================
+# imports
+# =============================================================================
 import os
 import numpy as np 
 from PIL import Image
@@ -7,17 +11,27 @@ from matplotlib.colors import LogNorm
 import cv2
 import tifffile
 #matplotlib qt
- 
- 
+
+#%%
+# =============================================================================
 # Below are some functions for reading Tiff file images and calculating Rocking curve,2D map intensity and Centroid.
+# =============================================================================
+def get_data_path(run,):
+    root_dir = '/Users/clairewu/Documents/F22/BTS-ARMY'
+    return f'{root_dir}/S{run}'
+
+def get_image_data(run, scan_num):
+    data_path = get_data_path(run)
+    image = Image.open(f'{data_path}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
+    return np.array(image)                  
+
+ 
 def RockingCurve(run, scan_num,x,y):
     [xmin,xmax]  = x
     [ymin,ymax] = y
     ROI_sum = [0]*(scan_num)   
     for i in range (0,scan_num):
-        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'  
-        image = Image.open(f'{filepath}/S{run}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
-        image_data = np.array(image)                  
+        image_data = get_image_data(run, scan_num)
         ROI_sum[i]=np.sum(image_data[xmin:xmax,ymin:ymax])
     ROI_sum_array = np.asarray(ROI_sum)    
     intensity= ROI_sum_array
@@ -30,10 +44,7 @@ def Intensity2D(run,x_pixel,y_pixel,x,y):
     
     ROI_sum = [0]*(scan_num)
     for i in range (1,scan_num):
-        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'
-        image = Image.open(f'{filepath}/S{run}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
-        image_data = np.array(image)                    
-        
+        image_data = get_image_data(run, scan_num)
         ROI_sum[i-1]=np.sum(image_data[xmin:xmax,ymin:ymax])
     
         
@@ -42,7 +53,7 @@ def Intensity2D(run,x_pixel,y_pixel,x,y):
     return intensity
  
 def Centroid2D(run,x_pixel,y_pixel,x,y):
-    scan_num =  scan_num = x_pixel*y_pixel
+    scan_num =  x_pixel*y_pixel
     [xmin,xmax] = x
     [ymin,ymax] =y
     
@@ -50,10 +61,7 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
     centroid_y= np.empty(scan_num)
     
     for i in range (1,scan_num):
-        filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'
-        image = Image.open(f'{filepath}/S{run}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
-        image_data = np.array(image)                                                    
-    
+        image_data = get_image_data(run, scan_num)
         com = ndimage.measurements.center_of_mass(image_data[x_min:x_max,y_min:y_max])
         
         centroid_x[i],centroid_y[i] = com[0],com[1]
@@ -65,21 +73,21 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
 # =============================================================================
 # Select ROI: In this cell you manually chose the x and y cordinates of the ROI.
 # =============================================================================
-run = 8
- 
-filepath = '/Users/clairewu/Documents/F22/BTS-ARMY'
-data = Image.open(filepath+'/S00'+'%d'%run+'/S00'+'%d'%run+'_16.tif')
-image_array = np.array(data)
- 
-plt.close('all')
-plt.figure(figsize= (10,10))
-c=plt.imshow(image_array, origin='lower', cmap='RdBu',vmin = 0, vmax =10,aspect = 0.35)
-plt.xlim([350,445])
-plt.ylim([80,380])
-cbar=plt.colorbar(c)
-plt.tight_layout()
- 
-#plt.savefig('//Users/kumarneeraj/Documents/MeetingWith Haidan/03_23_2023/RoI_16p25.png',bbox_inches='tight')
+run = 625
+output_dir = get_data_path(run) + "/output_images"
+os.makedirs(output_dir, exist_ok=True)
+for i in range(21):
+    image_data = get_image_data(run=run, scan_num=i)
+    
+    plt.close('all')
+    plt.figure(figsize= (10,10))
+    c=plt.imshow(image_data, origin='lower', cmap='RdBu',vmin = 0, vmax =10,aspect = 0.35)
+    plt.xlim([1,1028])
+    plt.ylim([1,512]) #1028 x 512
+    cbar=plt.colorbar(c)
+    plt.tight_layout()
+    
+    plt.savefig(f'{output_dir}/BTS_test_1_S{run}_{str(i).zfill(5)}.png', bbox_inches='tight')
  
 #%%
 # =============================================================================
