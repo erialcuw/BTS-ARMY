@@ -76,8 +76,8 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
 run = 625
 output_dir = get_data_path(run) + "/output_images"
 os.makedirs(output_dir, exist_ok=True)
-for i in range(21):
-    image_data = get_image_data(run=run, scan_num=i)
+for scan_num in range(21):
+    image_data = get_image_data(run, scan_num)
     
     plt.close('all')
     plt.figure(figsize= (10,10))
@@ -87,7 +87,7 @@ for i in range(21):
     cbar=plt.colorbar(c)
     plt.tight_layout()
     
-    plt.savefig(f'{output_dir}/BTS_test_1_S{run}_{str(i).zfill(5)}.png', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.png', bbox_inches='tight')
  
 #%%
 # =============================================================================
