@@ -20,11 +20,15 @@ def get_data_path(run,):
     root_dir = '/Users/clairewu/Documents/F22/BTS-ARMY'
     return f'{root_dir}/S{run}'
 
-def get_image_data(run, scan_num):
+def get_image_data_np(run, scan_num):
     data_path = get_data_path(run)
     image = Image.open(f'{data_path}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
     return np.array(image)                  
 
+def get_image_data(run, scan_num):
+    data_path = get_data_path(run)
+    image = Image.open(f'{data_path}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.tif')  # import .tiff files from folder MapSacan. run is the run number and i is the number of scans
+    return image   
  
 def RockingCurve(run, scan_num,x,y):
     [xmin,xmax]  = x
@@ -73,15 +77,22 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
 # =============================================================================
 # Select ROI: In this cell you manually chose the x and y cordinates of the ROI.
 # =============================================================================
-run = 625
+run = 258
 output_dir = get_data_path(run) + "/output_images"
 os.makedirs(output_dir, exist_ok=True)
-for scan_num in range(21):
-    image_data = get_image_data(run, scan_num)
-    
+for scan_num in range(31):
+    image_data = get_image_data_np(run, scan_num)
+    image_data = np.float32(image_data)
+    gray = cv2.GaussianBlur(image_data, (5,5), 0)
+    (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
+    image_data = cv2.circle(image_data, maxLoc, 25, (255, 0, 0), 2)
+    print(maxLoc)
+    #cv2.imshow("hello", image_data)
+    #cv2.waitKey(0)
+
     plt.close('all')
     plt.figure(figsize= (10,10))
-    c=plt.imshow(image_data, origin='lower', cmap='RdBu',vmin = 0, vmax =10,aspect = 0.35)
+    c=plt.imshow(image_data, origin='lower', cmap='RdBu',vmin = 0, vmax =10)
     plt.xlim([1,1028])
     plt.ylim([1,512]) #1028 x 512
     cbar=plt.colorbar(c)
