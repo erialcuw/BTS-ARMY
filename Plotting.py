@@ -16,7 +16,7 @@ import tifffile
 # =============================================================================
 # Below are some functions for reading Tiff file images and calculating Rocking curve,2D map intensity and Centroid.
 # =============================================================================
-def get_data_path(run,):
+def get_data_path(run):
     root_dir = '/Users/clairewu/Documents/F22/BTS-ARMY'
     return f'{root_dir}/S{run}'
 
@@ -77,26 +77,36 @@ def Centroid2D(run,x_pixel,y_pixel,x,y):
 # =============================================================================
 # Select ROI: In this cell you manually chose the x and y cordinates of the ROI.
 # =============================================================================
-run = 258
+run = 625
 output_dir = get_data_path(run) + "/output_images"
 os.makedirs(output_dir, exist_ok=True)
-for scan_num in range(31):
+for scan_num in range(21):
     image_data = get_image_data_np(run, scan_num)
     image_data = np.float32(image_data)
-    gray = cv2.GaussianBlur(image_data, (5,5), 0)
-    (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
-    image_data = cv2.circle(image_data, maxLoc, 25, (255, 0, 0), 2)
-    print(maxLoc)
+    image_data = (image_data - np.min(image_data,axis=(0,1))) / np.max(image_data,axis=(0,1)) 
+    image_data = image_data * 255 # grayscaled
+    #plt.hist(image_data,bins=5) #check of intensity spread
+    thresh = 0.5 * 255
+    _,X_bw = cv2.threshold(image_data,thresh,1,cv2.THRESH_BINARY)
+    X_bw.astype(np.uint8)
+    plt.imshow(X_bw)
+    # plt.colorbar()
+    # plt.set_cmap('gray')
+    
+    # gray = cv2.GaussianBlur(image_data, (5,5), 0)
+    # (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
+    # image_data = cv2.circle(image_data, maxLoc, 25, (255, 0, 0), 2)
+    # print(maxLoc)
     #cv2.imshow("hello", image_data)
     #cv2.waitKey(0)
 
-    plt.close('all')
-    plt.figure(figsize= (10,10))
-    c=plt.imshow(image_data, origin='lower', cmap='RdBu',vmin = 0, vmax =10)
-    plt.xlim([1,1028])
-    plt.ylim([1,512]) #1028 x 512
-    cbar=plt.colorbar(c)
-    plt.tight_layout()
+    # plt.close('all')
+    # plt.figure(figsize= (10,10))
+    # c=plt.imshow(image_data, origin='lower', cmap='RdBu',vmin = 0, vmax =10)
+    # plt.xlim([1,1028])
+    # plt.ylim([1,512]) #1028 x 512
+    # cbar=plt.colorbar(c)
+    # plt.tight_layout()
     
     plt.savefig(f'{output_dir}/BTS_test_1_S{run}_{str(scan_num).zfill(5)}.png', bbox_inches='tight')
  
@@ -176,8 +186,8 @@ plt.tight_layout()
 # which you want to calculate the centroid. 
 # =============================================================================
  
-run = 57 # Enter the run number. Change the filepath in the Intensity2D function.
-x_pixel,y_pixel = 41,41  # Manually put these values from logbook or nc files. 
+run = 257 # Enter the run number. Change the filepath in the Intensity2D function.
+x_pixel,y_pixel = 75, 75  # Manually put these values from logbook or nc files. 
 # use the values use selected from the above plot.
 #IMPORTANT: x and y coordinates are somehow flipped. What you select as x is actually. I haven't fixed this issue yet.   
 x_ROI = [100,400]
